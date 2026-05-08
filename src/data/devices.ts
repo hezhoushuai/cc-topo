@@ -22,8 +22,8 @@ export const selectableDevices: SelectableDevice[] = [
     name: 'LAPTOP-RD-22',
     type: 'laptop',
     ip: '10.10.40.88',
-    status: 'warning',
-    description: '研发部 · 移动办公',
+    status: 'offline',
+    description: '研发部 · 移动办公（离线）',
   },
   {
     id: 'srv-db-master',
@@ -72,10 +72,10 @@ const topologies: Record<string, Topology> = {
           status: 'online',
         },
         children: [
-          { id: 'srv-fin-db', name: 'SRV-FIN-DB', type: 'server', ip: '10.20.0.21', status: 'online' },
-          { id: 'srv-erp-app', name: 'SRV-ERP-APP', type: 'server', ip: '10.20.0.22', status: 'online' },
-          { id: 'nas-finance', name: 'NAS-FINANCE', type: 'nas', ip: '10.20.10.5', status: 'online' },
-          { id: 'srv-file-02', name: 'SRV-FILE-02', type: 'server', ip: '10.20.0.23', status: 'warning' },
+          { id: 'srv-fin-db', name: 'SRV-FIN-DB', type: 'server', ip: '10.20.0.21', status: 'online', isChild: true },
+          { id: 'srv-erp-app', name: 'SRV-ERP-APP', type: 'server', ip: '10.20.0.22', status: 'online', isChild: true },
+          { id: 'nas-finance', name: 'NAS-FINANCE', type: 'nas', ip: '10.20.10.5', status: 'online', isChild: true },
+          { id: 'srv-file-02', name: 'SRV-FILE-02', type: 'server', ip: '10.20.0.23', status: 'warning', isChild: true, unreachable: true },
         ],
       },
       {
@@ -104,9 +104,9 @@ const topologies: Record<string, Topology> = {
           status: 'online',
         },
         children: [
-          { id: 'laptop-mgr-08', name: 'LAPTOP-MGR-08', type: 'laptop', ip: '10.10.60.12', status: 'online' },
-          { id: 'pad-mgr-02', name: 'TABLET-MGR-02', type: 'tablet', ip: '10.10.60.18', status: 'online' },
-          { id: 'phone-fin-01', name: 'PHONE-FIN-01', type: 'phone', ip: '10.10.60.31', status: 'online' },
+          { id: 'laptop-mgr-08', name: 'LAPTOP-MGR-08', type: 'laptop', ip: '10.10.60.12', status: 'online', isChild: true },
+          { id: 'pad-mgr-02', name: 'TABLET-MGR-02', type: 'tablet', ip: '10.10.60.18', status: 'online', isChild: true },
+          { id: 'phone-fin-01', name: 'PHONE-FIN-01', type: 'phone', ip: '10.10.60.31', status: 'online', isChild: true, unreachable: true },
         ],
       },
     ],
@@ -132,10 +132,10 @@ const topologies: Record<string, Topology> = {
           status: 'online',
         },
         children: [
-          { id: 'srv-db-master', name: 'SRV-DB-MASTER', type: 'server', ip: '10.20.0.31', status: 'online' },
-          { id: 'srv-cache-redis', name: 'SRV-CACHE-REDIS', type: 'server', ip: '10.20.0.41', status: 'online' },
-          { id: 'lb-nginx-01', name: 'LB-NGINX-01', type: 'router', ip: '10.20.0.5', status: 'online' },
-          { id: 'srv-mq-kafka', name: 'SRV-MQ-KAFKA', type: 'server', ip: '10.20.0.51', status: 'warning' },
+          { id: 'srv-db-master', name: 'SRV-DB-MASTER', type: 'server', ip: '10.20.0.31', status: 'online', isChild: true },
+          { id: 'srv-cache-redis', name: 'SRV-CACHE-REDIS', type: 'server', ip: '10.20.0.41', status: 'online', isChild: true },
+          { id: 'lb-nginx-01', name: 'LB-NGINX-01', type: 'router', ip: '10.20.0.5', status: 'online', isChild: true },
+          { id: 'srv-mq-kafka', name: 'SRV-MQ-KAFKA', type: 'server', ip: '10.20.0.51', status: 'warning', isChild: true, unreachable: true },
         ],
       },
       {
@@ -162,7 +162,7 @@ const topologies: Record<string, Topology> = {
       name: 'LAPTOP-RD-22',
       type: 'laptop',
       ip: '10.10.40.88',
-      status: 'warning',
+      status: 'offline',
     },
     branches: [
       {

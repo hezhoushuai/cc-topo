@@ -21,6 +21,8 @@ export interface BaseDevice {
   type: DeviceType;
   ip: string;
   status?: DeviceStatus;
+  isChild?: boolean;
+  unreachable?: boolean;
 }
 
 export interface BranchDevice extends BaseDevice {}
@@ -55,6 +57,7 @@ export interface NodeData {
   activePorts?: string[];
   togglePorts?: TogglePortInfo[];
   portCount?: { left: number; right: number };
+  portConnections?: Record<string, number>;
 }
 
 export interface TogglePortInfo {
@@ -66,6 +69,7 @@ export interface EdgeData {
   kind: LinkKind;
   branchId?: string;
   expanded?: boolean;
+  unreachable?: boolean;
 }
 
 export interface NicInfo {

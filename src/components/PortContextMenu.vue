@@ -10,12 +10,14 @@ import {
 import { getNic } from '../store/nics';
 
 const nic = computed(() =>
-  portMenu.deviceId && portMenu.nicId ? getNic(portMenu.deviceId, portMenu.nicId) : undefined,
+  portMenu.deviceId && portMenu.nicId && portMenu.isCenter
+    ? getNic(portMenu.deviceId, portMenu.nicId)
+    : undefined,
 );
 
 const menuStyle = computed(() => {
   const W = 196;
-  const H = 152;
+  const H = portMenu.isCenter ? 188 : 60;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const x = Math.min(portMenu.x, vw - W - 8);
@@ -69,7 +71,10 @@ onBeforeUnmount(() => {
       class="port-menu fixed z-[1000] w-[196px] rounded-lg border border-slate-700/80 bg-slate-900/97 backdrop-blur-md shadow-2xl ring-1 ring-cyan-500/20 overflow-hidden text-slate-200"
       :style="menuStyle"
     >
-      <div class="px-3 py-2 border-b border-slate-800 bg-slate-950/80">
+      <div
+        v-if="portMenu.isCenter"
+        class="px-3 py-2 border-b border-slate-800 bg-slate-950/80"
+      >
         <div class="text-[10px] uppercase tracking-wider text-slate-500">网卡</div>
         <div class="text-[12px] font-mono font-semibold text-cyan-300 truncate">
           {{ nic?.name ?? portMenu.nicId }}
@@ -78,11 +83,21 @@ onBeforeUnmount(() => {
           {{ nic?.ip }}
         </div>
       </div>
-      <button type="button" class="menu-item" @click="onDetail">
+      <button
+        v-if="portMenu.isCenter"
+        type="button"
+        class="menu-item"
+        @click="onDetail"
+      >
         <span class="menu-icon">ⓘ</span>
         <span class="flex-1 text-left">查看详情</span>
       </button>
-      <button type="button" class="menu-item" @click="onConfig">
+      <button
+        v-if="portMenu.isCenter"
+        type="button"
+        class="menu-item"
+        @click="onConfig"
+      >
         <span class="menu-icon">⚙</span>
         <span class="flex-1 text-left">网卡配置</span>
       </button>

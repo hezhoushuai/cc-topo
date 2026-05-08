@@ -3,6 +3,7 @@ import { reactive } from 'vue';
 export interface PortContext {
   deviceId: string;
   nicId: string;
+  isCenter?: boolean;
 }
 
 export const portMenu = reactive({
@@ -11,6 +12,7 @@ export const portMenu = reactive({
   y: 0,
   deviceId: '',
   nicId: '',
+  isCenter: false,
 });
 
 export const detailPanel = reactive({
@@ -36,6 +38,7 @@ export function openPortMenu(x: number, y: number, ctx: PortContext): void {
   portMenu.y = y;
   portMenu.deviceId = ctx.deviceId;
   portMenu.nicId = ctx.nicId;
+  portMenu.isCenter = ctx.isCenter ?? false;
   portMenu.visible = true;
 }
 

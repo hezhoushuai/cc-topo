@@ -29,6 +29,7 @@ const allOptions: Option[] = [
 const selectedType = ref<DeviceType>('workstation');
 const customName = ref('');
 const customIp = ref('');
+const isChild = ref(true);
 const error = ref('');
 
 const parentNic = computed(() =>
@@ -48,6 +49,7 @@ watch(
     selectedType.value = parentNic.value?.kind === 'wireless' ? 'laptop' : 'workstation';
     customName.value = '';
     customIp.value = '';
+    isChild.value = true;
     error.value = '';
   },
 );
@@ -95,6 +97,7 @@ function onSubmit(): void {
     type: selectedType.value,
     ip,
     status: 'online',
+    isChild: isChild.value,
   };
   addDevice(props.rootId, {
     id,
@@ -123,7 +126,7 @@ function onSubmit(): void {
               <div class="text-[10px] uppercase tracking-wider text-slate-500">添加连接设备</div>
               <div class="text-sm font-semibold text-slate-100 mt-0.5">
                 通过
-                <span class="font-mono text-cyan-300">{{ parentNic?.name }}</span>
+                <span class="font-mono text-cyan-300">{{ parentNic?.name ?? addDeviceDialog.nicId }}</span>
                 接到
                 <span class="text-slate-300">{{ parentDevice?.name }}</span>
               </div>
@@ -168,6 +171,13 @@ function onSubmit(): void {
             <label class="form-row">
               <span class="form-key">IP 地址（留空自动生成）</span>
               <input v-model="customIp" class="form-input" :placeholder="defaultIp()" />
+            </label>
+            <label class="child-row" :class="isChild ? 'child-row-on' : ''">
+              <input v-model="isChild" type="checkbox" class="child-check" />
+              <div class="flex-1">
+                <div class="text-[12px] text-slate-200 font-medium">设为子节点</div>
+                <div class="text-[10px] text-slate-500 mt-0.5">勾选后会自动启用 PING 监测，实时探测连通性</div>
+              </div>
             </label>
             <div v-if="error" class="text-[12px] text-rose-400">{{ error }}</div>
             <div class="flex justify-end gap-2 pt-2">
@@ -229,6 +239,32 @@ function onSubmit(): void {
   border-color: rgb(34 211 238);
   background: rgb(8 51 68 / 0.6);
   color: rgb(165 243 252);
+}
+.child-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgb(30 41 59);
+  background: rgba(2, 6, 23, 0.6);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.child-row:hover {
+  border-color: rgb(71 85 105);
+}
+.child-row-on {
+  border-color: rgb(34 211 238);
+  background: rgba(8, 51, 68, 0.45);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+.child-check {
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  accent-color: rgb(34 211 238);
+  cursor: pointer;
 }
 .btn {
   font-size: 12px;
