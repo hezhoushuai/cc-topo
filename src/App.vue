@@ -9,6 +9,11 @@ import AddDeviceDialog from './components/AddDeviceDialog.vue';
 import { selectableDevices } from './data/devices';
 
 const selectedIds = ref<string[]>([selectableDevices[0].id]);
+const sidebarCollapsed = ref(false);
+
+function toggleSidebar(): void {
+  sidebarCollapsed.value = !sidebarCollapsed.value;
+}
 
 function onSelect(id: string, mode: 'replace' | 'toggle'): void {
   if (mode === 'toggle') {
@@ -33,7 +38,12 @@ function onClosePanel(id: string): void {
 
 <template>
   <div class="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
-    <DeviceList :selected-ids="selectedIds" @select="onSelect" />
+    <DeviceList
+      :selected-ids="selectedIds"
+      :collapsed="sidebarCollapsed"
+      @select="onSelect"
+      @toggle="toggleSidebar"
+    />
     <main class="flex-1 flex flex-col min-w-0">
       <header
         class="h-14 shrink-0 flex items-center px-5 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur"
