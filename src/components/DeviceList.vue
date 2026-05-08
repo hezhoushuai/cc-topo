@@ -55,9 +55,6 @@ function onClick(e: MouseEvent, id: string): void {
   emit('select', id, mode);
 }
 
-function onCompactClick(id: string): void {
-  emit('select', id, 'replace');
-}
 </script>
 
 <template>
@@ -102,7 +99,7 @@ function onCompactClick(id: string): void {
               ? `0 0 8px ${TYPE_THEME[d.type].glow}`
               : 'none',
           }"
-          @click="onCompactClick(d.id)"
+          @click="(e) => onClick(e, d.id)"
         >
           {{ typeIcon[d.type] }}
           <span
