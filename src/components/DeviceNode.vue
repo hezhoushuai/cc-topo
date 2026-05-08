@@ -252,6 +252,25 @@ const centerBadgeStyle = computed(() => {
   return { background: theme.value.primary, color: '#0a0f1c' };
 });
 
+const showChildBadge = computed(() => !isCenter.value && device.value.isChild === true);
+
+const childBadgeStyle = computed(() => {
+  if (isUnreachable.value) {
+    return {
+      background: 'rgba(244, 63, 94, 0.2)',
+      borderColor: 'rgba(244, 63, 94, 0.65)',
+      color: 'rgb(254, 205, 211)',
+      boxShadow: '0 0 6px rgba(244, 63, 94, 0.35)',
+    };
+  }
+  return {
+    background: 'rgba(34, 211, 238, 0.18)',
+    borderColor: 'rgba(34, 211, 238, 0.6)',
+    color: 'rgb(165, 243, 252)',
+    boxShadow: '0 0 6px rgba(34, 211, 238, 0.3)',
+  };
+});
+
 function fmtPct(v: number): string {
   return `${v.toFixed(0)}%`;
 }
@@ -390,6 +409,15 @@ function fmtPct(v: number): string {
 
     <!-- Hub / leaf card: compact, no metrics -->
     <template v-else>
+      <div
+        v-if="showChildBadge"
+        class="child-badge"
+        :style="childBadgeStyle"
+        :title="isUnreachable ? '子节点 · 网络不通' : '子节点 · 自动监测中'"
+      >
+        <span class="child-badge-dot"></span>
+        子节点
+      </div>
       <div class="flex items-center gap-2 h-full">
         <div
           class="shrink-0 size-8 grid place-items-center rounded border"
@@ -479,6 +507,31 @@ function fmtPct(v: number): string {
 <style scoped>
 .topo-card-offline {
   filter: grayscale(0.7);
+}
+.child-badge {
+  position: absolute;
+  top: -7px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px 1px 5px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  z-index: 8;
+  backdrop-filter: blur(2px);
+}
+.child-badge-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 4px currentColor;
+  flex-shrink: 0;
 }
 .metric-line {
   display: flex;
