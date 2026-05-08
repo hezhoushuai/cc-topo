@@ -47,11 +47,11 @@ body,
 
 .topo-port {
   position: absolute;
-  width: 16px;
-  height: 12px;
+  width: 14px;
+  height: 10px;
   background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
   border: 1.5px solid #475569;
-  border-radius: 3px;
+  border-radius: 2px;
   cursor: context-menu;
   transition: all 0.18s ease;
   z-index: 5;
@@ -61,12 +61,12 @@ body,
 }
 
 .topo-port-left {
-  left: -9px;
+  left: -8px;
   transform: translateY(-50%);
 }
 
 .topo-port-right {
-  right: -9px;
+  right: -8px;
   transform: translateY(-50%);
 }
 
@@ -114,8 +114,8 @@ body,
 
 .topo-toggle {
   position: absolute;
-  width: 18px;
-  height: 16px;
+  width: 16px;
+  height: 14px;
   display: grid;
   place-items: center;
   background: rgba(2, 6, 23, 0.95);
@@ -131,10 +131,10 @@ body,
 }
 
 .topo-toggle-right {
-  right: -36px;
+  right: -30px;
 }
 .topo-toggle-left {
-  left: -36px;
+  left: -30px;
 }
 
 .topo-toggle:hover {
@@ -170,6 +170,14 @@ body,
 .vue-flow__edge.pinging .vue-flow__edge-path {
   stroke-dasharray: 6 4 !important;
   animation: topo-ant-line 0.6s linear infinite;
+}
+
+.vue-flow__edge.edge-unreachable .vue-flow__edge-path {
+  stroke: #f43f5e !important;
+  stroke-dasharray: 6 4 !important;
+  stroke-width: 2.2 !important;
+  animation: topo-ant-line 0.6s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.5));
 }
 
 .vue-flow__attribution {

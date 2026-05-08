@@ -98,6 +98,10 @@ function onPaneReady(): void {
 function onPaneClick(): void {
   closePortMenu();
 }
+
+defineExpose({
+  fit: () => fitView({ padding: 0.18, duration: 300 }),
+});
 </script>
 
 <template>
@@ -114,7 +118,7 @@ function onPaneClick(): void {
       :elements-selectable="false"
       :pan-on-drag="true"
       :zoom-on-scroll="true"
-      :min-zoom="0.3"
+      :min-zoom="0.1"
       :max-zoom="1.6"
       @pane-ready="onPaneReady"
       @pane-click="onPaneClick"
