@@ -8,7 +8,8 @@ import { buildLayout } from '../composables/useTopologyLayout';
 import { useMetrics } from '../composables/useMetrics';
 import { useTrafficTicker } from '../store/traffic';
 import { closePortMenu } from '../store/ui';
-import { getPingSummary, isPingOn, togglePing, usePingTicker } from '../store/ping';
+import { enablePing, getPingSummary, isPingOn, togglePing, usePingTicker } from '../store/ping';
+import { getAdditions } from '../store/additions';
 import { PingServiceKey, TogglePortKey } from '../composables/topologyKey';
 import DeviceNode from './DeviceNode.vue';
 import TopologyEdge from './TopologyEdge.vue';
@@ -68,9 +69,24 @@ provide(PingServiceKey, {
   summary: (targetId: string) => getPingSummary(props.selectedId, targetId),
 });
 
+function ensureChildPings(): void {
+  const t = getTopology(props.selectedId);
+  if (t) {
+    for (const branch of t.branches) {
+      for (const child of branch.children) {
+        if (child.isChild) enablePing(props.selectedId, child.id);
+      }
+    }
+  }
+  for (const add of getAdditions(props.selectedId)) {
+    if (add.device.isChild) enablePing(props.selectedId, add.device.id);
+  }
+}
+
 const layout = computed(() => {
   const t = getTopology(props.selectedId);
   if (!t) return { nodes: [], edges: [] };
+  ensureChildPings();
   return buildLayout(t, getCollapsedSet(props.selectedId), props.selectedId);
 });
 
