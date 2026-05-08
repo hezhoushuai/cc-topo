@@ -33,13 +33,19 @@ function heightOf(role: NodeRole): number {
 
 const WIRED = '#22d3ee';
 const WIRELESS = '#f59e0b';
+const UNREACHABLE = '#f43f5e';
 
-function edgeStyle(kind: LinkKind) {
-  const color = kind === 'wireless' ? WIRELESS : WIRED;
+function edgeStyle(kind: LinkKind, unreachable: boolean) {
+  const color = unreachable ? UNREACHABLE : kind === 'wireless' ? WIRELESS : WIRED;
   return {
     stroke: color,
-    strokeWidth: 1.8,
-    strokeDasharray: kind === 'wireless' ? '8 6' : undefined,
+    strokeWidth: unreachable ? 2.2 : 1.8,
+    strokeDasharray: unreachable
+      ? '6 4'
+      : kind === 'wireless'
+        ? '8 6'
+        : undefined,
+    filter: unreachable ? 'drop-shadow(0 0 3px rgba(244,63,94,0.5))' : undefined,
   } as Record<string, string | number | undefined>;
 }
 
@@ -434,12 +440,16 @@ export function buildLayout(
       targetHandle: s.targetPort,
       type: 'topology',
       data: { kind: s.kind, unreachable: targetUnreachable },
-      style: edgeStyle(s.kind),
+      style: edgeStyle(s.kind, targetUnreachable),
       class: classes.length > 0 ? classes.join(' ') : undefined,
       markerEnd: s.hasMarker
         ? {
             type: MarkerType.ArrowClosed,
-            color: s.kind === 'wireless' ? WIRELESS : WIRED,
+            color: targetUnreachable
+              ? UNREACHABLE
+              : s.kind === 'wireless'
+                ? WIRELESS
+                : WIRED,
             width: 14,
             height: 14,
           }
