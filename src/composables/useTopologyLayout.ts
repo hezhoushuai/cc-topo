@@ -317,8 +317,6 @@ export function buildLayout(
     minLeftX  = Math.min(minLeftX,  rec.x);
   }
 
-  const leftHubDeviceIds = new Set(leftBranches.map((b) => b.hub.id));
-
   const additions = getAdditions(selectedRootId);
   const groupedByParent = new Map<string, typeof additions>();
   for (const add of additions) {
@@ -330,7 +328,7 @@ export function buildLayout(
   for (const [parentDeviceId, group] of groupedByParent) {
     const parent = recordByDeviceId.get(parentDeviceId);
     if (!parent) continue;
-    const isLeftParent = leftHubDeviceIds.has(parentDeviceId);
+    const isLeftParent = parent.x < 0;
     const colX = isLeftParent ? minLeftX - 60 - NODE_W : maxRightX + 60;
     const stackH = group.length * LEAF_H + (group.length - 1) * ROW_GAP;
     const stackTop = parent.y + heightOf(parent.role) / 2 - stackH / 2;
