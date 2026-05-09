@@ -311,7 +311,13 @@ export function buildLayout(
   for (const rec of nodeRecords.values()) recordByDeviceId.set(rec.device.id, rec);
 
   let maxRightX = 0;
-  for (const rec of nodeRecords.values()) maxRightX = Math.max(maxRightX, rec.x + NODE_W);
+  let minLeftX = 0;
+  for (const rec of nodeRecords.values()) {
+    maxRightX = Math.max(maxRightX, rec.x + NODE_W);
+    minLeftX  = Math.min(minLeftX,  rec.x);
+  }
+
+  const leftHubDeviceIds = new Set(leftBranches.map((b) => b.hub.id));
 
   const additions = getAdditions(selectedRootId);
   const groupedByParent = new Map<string, typeof additions>();
@@ -324,7 +330,8 @@ export function buildLayout(
   for (const [parentDeviceId, group] of groupedByParent) {
     const parent = recordByDeviceId.get(parentDeviceId);
     if (!parent) continue;
-    const colX   = maxRightX + 60;
+    const isLeftParent = leftHubDeviceIds.has(parentDeviceId);
+    const colX = isLeftParent ? minLeftX - 60 - NODE_W : maxRightX + 60;
     const stackH = group.length * LEAF_H + (group.length - 1) * ROW_GAP;
     const stackTop = parent.y + heightOf(parent.role) / 2 - stackH / 2;
     group.forEach((add, i) => {
@@ -335,16 +342,32 @@ export function buildLayout(
       nodeRecords.set(add.id, newRec);
       recordByDeviceId.set(add.device.id, newRec);
       ensureNicsFor(add.device);
-      markActive(parent.id, add.parentNicId);
-      markActive(add.id, LEAF_LEFT_PORT);
-      edgeSpecs.push({
-        id: `addition-edge-${add.id}`,
-        source: parent.id, target: add.id,
-        sourcePort: add.parentNicId, targetPort: LEAF_LEFT_PORT,
-        kind: add.kind, hasMarker: false,
-      });
+      if (isLeftParent) {
+        // New device sits further left; its rp-0 connects to the hub's selected left port
+        markActive(parent.id, add.parentNicId);
+        markActive(add.id, HUB_RIGHT_PORT);
+        edgeSpecs.push({
+          id: `addition-edge-${add.id}`,
+          source: add.id, target: parent.id,
+          sourcePort: HUB_RIGHT_PORT, targetPort: add.parentNicId,
+          kind: add.kind, hasMarker: false,
+        });
+      } else {
+        markActive(parent.id, add.parentNicId);
+        markActive(add.id, LEAF_LEFT_PORT);
+        edgeSpecs.push({
+          id: `addition-edge-${add.id}`,
+          source: parent.id, target: add.id,
+          sourcePort: add.parentNicId, targetPort: LEAF_LEFT_PORT,
+          kind: add.kind, hasMarker: false,
+        });
+      }
     });
-    maxRightX = colX + NODE_W;
+    if (isLeftParent) {
+      minLeftX = colX;
+    } else {
+      maxRightX = colX + NODE_W;
+    }
   }
 
   // --- Port connections ---
