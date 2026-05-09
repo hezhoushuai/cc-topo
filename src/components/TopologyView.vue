@@ -9,8 +9,9 @@ import { useMetrics } from '../composables/useMetrics';
 import { useTrafficTicker } from '../store/traffic';
 import { closePortMenu } from '../store/ui';
 import { enablePing, getPingSummary, isPingOn, togglePing, usePingTicker } from '../store/ping';
-import { getAdditions } from '../store/additions';
-import { PingServiceKey, TogglePortKey } from '../composables/topologyKey';
+import { getAdditions, removeDevice } from '../store/additions';
+import { removeStaticDevice } from '../store/removals';
+import { PingServiceKey, RemoveDeviceKey, TogglePortKey } from '../composables/topologyKey';
 import DeviceNode from './DeviceNode.vue';
 import TopologyEdge from './TopologyEdge.vue';
 
@@ -60,6 +61,14 @@ provide(TogglePortKey, async (deviceId: string, portId: string) => {
         });
       }
     }
+  }
+});
+
+provide(RemoveDeviceKey, (deviceId: string) => {
+  if (deviceId.startsWith('add-')) {
+    removeDevice(props.selectedId, deviceId);
+  } else {
+    removeStaticDevice(props.selectedId, deviceId);
   }
 });
 

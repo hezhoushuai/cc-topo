@@ -4,6 +4,7 @@ export interface PortContext {
   deviceId: string;
   nicId: string;
   isCenter?: boolean;
+  isChildNode?: boolean;
 }
 
 export const portMenu = reactive({
@@ -13,6 +14,7 @@ export const portMenu = reactive({
   deviceId: '',
   nicId: '',
   isCenter: false,
+  isChildNode: false,
 });
 
 export const detailPanel = reactive({
@@ -39,6 +41,7 @@ export function openPortMenu(x: number, y: number, ctx: PortContext): void {
   portMenu.deviceId = ctx.deviceId;
   portMenu.nicId = ctx.nicId;
   portMenu.isCenter = ctx.isCenter ?? false;
+  portMenu.isChildNode = ctx.isChildNode ?? false;
   portMenu.visible = true;
 }
 

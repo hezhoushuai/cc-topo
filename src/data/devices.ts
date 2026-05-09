@@ -62,6 +62,19 @@ const topologies: Record<string, Topology> = {
     },
     branches: [
       {
+        id: 'b-fin-upstream',
+        side: 'left',
+        kind: 'wired',
+        hub: {
+          id: 'rt-campus-gw',
+          name: 'RT-CAMPUS-GW',
+          type: 'router',
+          ip: '10.0.0.254',
+          status: 'online',
+        },
+        children: [],
+      },
+      {
         id: 'b-fin-core',
         kind: 'wired',
         hub: {
@@ -104,9 +117,9 @@ const topologies: Record<string, Topology> = {
           status: 'online',
         },
         children: [
-          { id: 'laptop-mgr-08', name: 'LAPTOP-MGR-08', type: 'laptop', ip: '10.10.60.12', status: 'online', isChild: true },
-          { id: 'pad-mgr-02', name: 'TABLET-MGR-02', type: 'tablet', ip: '10.10.60.18', status: 'online', isChild: true },
-          { id: 'phone-fin-01', name: 'PHONE-FIN-01', type: 'phone', ip: '10.10.60.31', status: 'online', isChild: true, unreachable: true },
+          { id: 'laptop-mgr-08', name: 'LAPTOP-MGR-08', type: 'laptop', ip: '10.10.60.12', status: 'warning', isChild: true, unreachable: true },
+          { id: 'pad-mgr-02', name: 'TABLET-MGR-02', type: 'tablet', ip: '10.10.60.18', status: 'warning', isChild: true, unreachable: true },
+          { id: 'phone-fin-01', name: 'PHONE-FIN-01', type: 'phone', ip: '10.10.60.31', status: 'warning', isChild: true, unreachable: true },
         ],
       },
     ],
@@ -210,6 +223,19 @@ const topologies: Record<string, Topology> = {
     },
     branches: [
       {
+        id: 'b-db-upstream',
+        side: 'left',
+        kind: 'wired',
+        hub: {
+          id: 'fw-db-mgmt',
+          name: 'FW-DB-MGMT',
+          type: 'firewall',
+          ip: '10.20.0.253',
+          status: 'online',
+        },
+        children: [],
+      },
+      {
         id: 'b-db-core',
         kind: 'wired',
         hub: {
@@ -281,6 +307,22 @@ const topologies: Record<string, Topology> = {
         },
         children: [
           { id: 'phone-hr-09', name: 'PHONE-HR-09', type: 'phone', ip: '10.10.60.42', status: 'online' },
+        ],
+      },
+      {
+        id: 'b-hr-isolated',
+        kind: 'wired',
+        hub: {
+          id: 'sw-isolated-1f',
+          name: 'SW-ISOLATED-1F',
+          type: 'switch',
+          ip: '10.30.0.1',
+          status: 'online',
+        },
+        children: [
+          { id: 'srv-legacy-01', name: 'SRV-LEGACY-01', type: 'server', ip: '10.30.0.11', status: 'warning', isChild: true, unreachable: true },
+          { id: 'srv-legacy-02', name: 'SRV-LEGACY-02', type: 'server', ip: '10.30.0.12', status: 'warning', isChild: true, unreachable: true },
+          { id: 'ws-isolated-01', name: 'WS-ISOLATED-01', type: 'workstation', ip: '10.30.0.21', status: 'warning', isChild: true, unreachable: true },
         ],
       },
     ],

@@ -11,3 +11,6 @@ export interface PingService {
 }
 
 export const PingServiceKey: InjectionKey<PingService> = Symbol('pingService');
+
+export const RemoveDeviceKey: InjectionKey<(deviceId: string) => void> =
+  Symbol('removeDevice');

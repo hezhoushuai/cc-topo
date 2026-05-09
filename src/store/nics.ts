@@ -29,7 +29,7 @@ function deriveName(
   const isWifi = deriveKind(type, side) === 'wireless';
   if (isWifi) return `wlan${index}`;
   if (type === 'switch') return side === 'left' ? `Gi0/${index + 1}` : `Gi0/${leftCount + index + 1}`;
-  return `eth${side === 'left' ? index : leftCount + index}`;
+  return side === 'left' ? `ext${index}` : `int${index}`;
 }
 
 function ipFromBase(baseIp: string, offset: number): string {

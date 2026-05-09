@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted } from 'vue';
 import {
   closePortMenu,
   openAddDeviceDialog,
-  openConfigDialog,
   openDetailPanel,
   portMenu,
 } from '../store/ui';
@@ -17,7 +16,7 @@ const nic = computed(() =>
 
 const menuStyle = computed(() => {
   const W = 196;
-  const H = portMenu.isCenter ? 188 : 60;
+  const H = portMenu.isCenter ? 148 : 50;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const x = Math.min(portMenu.x, vw - W - 8);
@@ -31,10 +30,6 @@ function ctx(): { deviceId: string; nicId: string } {
 
 function onDetail(): void {
   openDetailPanel(ctx());
-  closePortMenu();
-}
-function onConfig(): void {
-  openConfigDialog(ctx());
   closePortMenu();
 }
 function onAdd(): void {
@@ -91,15 +86,6 @@ onBeforeUnmount(() => {
       >
         <span class="menu-icon">ⓘ</span>
         <span class="flex-1 text-left">查看详情</span>
-      </button>
-      <button
-        v-if="portMenu.isCenter"
-        type="button"
-        class="menu-item"
-        @click="onConfig"
-      >
-        <span class="menu-icon">⚙</span>
-        <span class="flex-1 text-left">网卡配置</span>
       </button>
       <button type="button" class="menu-item" @click="onAdd">
         <span class="menu-icon">＋</span>
