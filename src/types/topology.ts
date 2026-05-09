@@ -30,6 +30,7 @@ export interface BranchDevice extends BaseDevice {}
 export interface Branch {
   id: string;
   kind: LinkKind;
+  side?: 'left' | 'right';
   hub: BaseDevice;
   children: BranchDevice[];
 }

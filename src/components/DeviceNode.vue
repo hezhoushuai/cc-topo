@@ -4,10 +4,10 @@ import { Handle, Position } from '@vue-flow/core';
 import type { NodeProps } from '@vue-flow/core';
 import { metricsOf } from '../composables/useMetrics';
 import { ensureNicsFor } from '../store/nics';
-import { openPortMenu } from '../store/ui';
+import { openPortMenu, openConfigDialog } from '../store/ui';
 import { PROTOCOLS } from '../store/ping';
 import type { Protocol } from '../store/ping';
-import { PingServiceKey, TogglePortKey } from '../composables/topologyKey';
+import { PingServiceKey, RemoveDeviceKey, TogglePortKey } from '../composables/topologyKey';
 import { PORT_COUNT, portIdLeft, portIdRight, portPositions } from '../utils/ports';
 import { CAPACITY, fmtCpuUsage, fmtDiskUsage, fmtMemUsage } from '../utils/capacity';
 import { TYPE_THEME } from '../utils/theme';
@@ -51,11 +51,17 @@ function portKindClass(portId: string): string {
 function onPortContext(e: MouseEvent, portId: string): void {
   e.preventDefault();
   e.stopPropagation();
+  // Child nodes have no available port operations
+  if (device.value.isChild === true) return;
   openPortMenu(e.clientX, e.clientY, {
     deviceId: device.value.id,
     nicId: portId,
     isCenter: isCenter.value,
   });
+}
+
+function onOpenNicConfig(): void {
+  openConfigDialog({ deviceId: device.value.id, nicId: portIdLeft(0) });
 }
 
 function portConnCount(portId: string): number {
@@ -68,6 +74,11 @@ function portConnLabel(portId: string): string {
 }
 
 const togglePort = inject(TogglePortKey);
+const removeDevice = inject(RemoveDeviceKey);
+
+function onRemove(): void {
+  removeDevice?.(device.value.id);
+}
 
 const togglePortsArr = computed<TogglePortInfo[]>(() => props.data.togglePorts ?? []);
 const rightToggles = computed(() =>
@@ -349,6 +360,10 @@ function fmtPct(v: number): string {
 
     <!-- Center card: full layout with metrics -->
     <template v-if="isCenter">
+      <!-- External / Internal side labels -->
+      <span class="nic-side-label nic-side-ext" :class="isOffline ? 'nic-side-offline' : ''">外</span>
+      <span class="nic-side-label nic-side-int" :class="isOffline ? 'nic-side-offline' : ''">内</span>
+
       <div class="flex items-center gap-2 mb-1.5">
         <div
           class="shrink-0 size-8 grid place-items-center rounded border"
@@ -379,6 +394,23 @@ function fmtPct(v: number): string {
             <span :class="['font-mono', isOffline ? 'text-slate-600' : 'text-slate-300']">{{ device.ip }}</span>
           </div>
         </div>
+        <!-- NIC config icon -->
+        <button
+          type="button"
+          class="nic-cfg-btn shrink-0"
+          title="网卡配置"
+          :disabled="isOffline"
+          @click.stop="onOpenNicConfig"
+          @mousedown.stop
+        >
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:block;">
+            <rect x="1" y="4.5" width="14" height="8" rx="1.2"/>
+            <rect x="2.8" y="7.2" width="2.2" height="2.8" rx="0.4" fill="currentColor" stroke="none"/>
+            <rect x="6.9" y="7.2" width="2.2" height="2.8" rx="0.4" fill="currentColor" stroke="none"/>
+            <rect x="11" y="7.2" width="2.2" height="2.8" rx="0.4" fill="currentColor" stroke="none"/>
+            <path d="M5.5 4.5V3a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v1.5"/>
+          </svg>
+        </button>
       </div>
 
       <div class="space-y-0.5">
@@ -409,6 +441,13 @@ function fmtPct(v: number): string {
 
     <!-- Hub / leaf card: compact, no metrics -->
     <template v-else>
+      <button
+        type="button"
+        class="remove-btn"
+        title="移除设备"
+        @click.stop="onRemove"
+        @mousedown.stop
+      >✕</button>
       <div
         v-if="showChildBadge"
         class="child-badge"
@@ -507,6 +546,81 @@ function fmtPct(v: number): string {
 <style scoped>
 .topo-card-offline {
   filter: grayscale(0.7);
+}
+
+.nic-side-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  z-index: 5;
+  pointer-events: none;
+  user-select: none;
+}
+.nic-side-ext {
+  left: 3px;
+  color: rgba(56, 189, 248, 0.55);
+}
+.nic-side-int {
+  right: 3px;
+  color: rgba(100, 116, 139, 0.55);
+}
+.nic-side-offline {
+  color: rgba(71, 85, 105, 0.4) !important;
+}
+
+.nic-cfg-btn {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  color: rgb(100 116 139);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+  padding: 0;
+}
+.nic-cfg-btn:hover:not(:disabled) {
+  color: rgb(56 189 248);
+  background: rgba(34, 211, 238, 0.12);
+}
+.nic-cfg-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgb(100 116 139);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  z-index: 9;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.12s, background 0.12s;
+}
+.remove-btn:hover {
+  color: rgb(251 113 133);
+  background: rgba(244, 63, 94, 0.15);
 }
 .child-badge {
   position: absolute;
