@@ -11,7 +11,7 @@ import { PingServiceKey, RemoveDeviceKey, TogglePortKey } from '../composables/t
 import { getPortCount, portIdLeft, portIdRight, portPositions } from '../utils/ports';
 import { getCapacity, fmtCpuUsage, fmtDiskUsage, fmtMemUsage } from '../utils/capacity';
 import { getTypeTheme } from '../utils/theme';
-import { getTypeIcon, getTypeLabel } from '../data/deviceTypes';
+import { getTypeIcon, getTypeLabel, isTypeIconColored } from '../data/deviceTypes';
 import type { NicInfo, NodeData, TogglePortInfo } from '../types/topology';
 
 const props = defineProps<NodeProps<NodeData>>();
@@ -228,6 +228,21 @@ const iconStyle = computed(() => {
   };
 });
 
+const iconMaskStyle = computed(() => {
+  const url = `url(${typeIcon(device.value.type)})`;
+  return {
+    backgroundColor: isOffline.value ? '#64748b' : theme.value.primaryLight,
+    WebkitMaskImage: url,
+    maskImage: url,
+  };
+});
+
+const iconColored = computed(() => isTypeIconColored(device.value.type));
+// 彩色图标在离线状态下保留原色不再适用，加灰度滤镜避免突兀
+const iconImgStyle = computed(() => (
+  isOffline.value ? { filter: 'grayscale(0.9) brightness(0.65)' } : undefined
+));
+
 const typeBadgeStyle = computed(() => ({
   color: isOffline.value ? '#64748b' : theme.value.badgeText,
 }));
@@ -345,7 +360,20 @@ function fmtPct(v: number): string {
           class="shrink-0 size-8 grid place-items-center rounded border"
           :style="iconStyle"
         >
-          <span class="text-[17px] leading-none">{{ typeIcon(device.type) }}</span>
+          <img
+            v-if="iconColored"
+            :src="typeIcon(device.type)"
+            :alt="device.type"
+            class="size-5 select-none"
+            :style="iconImgStyle"
+            draggable="false"
+          />
+          <span
+            v-else
+            class="device-type-icon size-5"
+            :style="iconMaskStyle"
+            :title="device.type"
+          ></span>
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
@@ -438,7 +466,20 @@ function fmtPct(v: number): string {
           class="shrink-0 size-8 grid place-items-center rounded border"
           :style="iconStyle"
         >
-          <span class="text-[17px] leading-none">{{ typeIcon(device.type) }}</span>
+          <img
+            v-if="iconColored"
+            :src="typeIcon(device.type)"
+            :alt="device.type"
+            class="size-5 select-none"
+            :style="iconImgStyle"
+            draggable="false"
+          />
+          <span
+            v-else
+            class="device-type-icon size-5"
+            :style="iconMaskStyle"
+            :title="device.type"
+          ></span>
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
