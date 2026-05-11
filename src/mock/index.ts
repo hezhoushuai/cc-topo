@@ -1,6 +1,7 @@
 import type { MockMethod } from 'vite-plugin-mock';
 import { selectableDevices, devices, branches } from './mockData';
 import type { MockDevice } from './mockData';
+import { getTypeDef, deriveNicKind } from '../data/deviceTypes';
 
 // ── 内存状态（dev server 重启前持续有效） ────────────────────
 const additions: Record<string, any[]> = {};
@@ -25,16 +26,7 @@ function buildTopology(rootId: string) {
   return { center, branches: rootBranches };
 }
 
-// ── NIC 生成（与前端 store 逻辑一致） ───────────────────────
-const PORT_COUNT: Record<string, { left: number; right: number }> = {
-  workstation: { left: 1, right: 2 }, server:   { left: 2, right: 4 },
-  router:      { left: 2, right: 4 }, switch:   { left: 0, right: 8 },
-  firewall:    { left: 2, right: 4 }, ap:       { left: 1, right: 4 },
-  laptop:      { left: 1, right: 2 }, tablet:   { left: 1, right: 1 },
-  phone:       { left: 1, right: 1 }, printer:  { left: 1, right: 1 },
-  nas:         { left: 1, right: 4 },
-};
-
+// ── NIC 生成（端口数与无线/有线判定来自 device-types.json） ──
 function hex2() { return Math.floor(Math.random() * 256).toString(16).padStart(2, '0'); }
 function generateMac() { return [hex2(), hex2(), hex2(), hex2(), hex2(), hex2()].join(':').toUpperCase(); }
 function ipFromBase(base: string, offset: number) {
@@ -44,18 +36,19 @@ function ipFromBase(base: string, offset: number) {
 function gatewayOf(ip: string) { const p = ip.split('.'); return `${p[0]}.${p[1]}.${p[2]}.1`; }
 
 function buildNics(device: MockDevice) {
-  const cfg = PORT_COUNT[device.type] ?? { left: 1, right: 2 };
+  const cfg = getTypeDef(device.type).ports;
   const out = [];
+  const leftKind = deriveNicKind(device.type, 'left');
+  const rightKind = deriveNicKind(device.type, 'right');
   for (let i = 0; i < cfg.left; i++) {
-    out.push({ id: `lp-${i}`, name: `ext${i}`, side: 'left', index: i,
+    out.push({ id: `lp-${i}`, name: leftKind === 'wireless' ? `wlan${i}` : `ext${i}`, side: 'left', index: i,
       mac: generateMac(), ip: i === 0 ? device.ip : ipFromBase(device.ip, 100 + i),
-      netmask: '255.255.255.0', gateway: gatewayOf(device.ip), kind: 'wired' });
+      netmask: '255.255.255.0', gateway: gatewayOf(device.ip), kind: leftKind });
   }
   for (let i = 0; i < cfg.right; i++) {
-    const isWifi = ['ap', 'phone', 'tablet', 'laptop'].includes(device.type);
-    out.push({ id: `rp-${i}`, name: isWifi ? `wlan${i}` : `int${i}`, side: 'right', index: i,
+    out.push({ id: `rp-${i}`, name: rightKind === 'wireless' ? `wlan${i}` : `int${i}`, side: 'right', index: i,
       mac: generateMac(), ip: ipFromBase(device.ip, 50 + i),
-      netmask: '255.255.255.0', gateway: gatewayOf(device.ip), kind: isWifi ? 'wireless' : 'wired' });
+      netmask: '255.255.255.0', gateway: gatewayOf(device.ip), kind: rightKind });
   }
   return out;
 }

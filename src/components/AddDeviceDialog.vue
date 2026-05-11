@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { addDeviceDialog, closeAddDeviceDialog } from '../store/ui';
 import { addDevice, nextAdditionId } from '../store/additions';
 import { getDeviceById, getNic } from '../store/nics';
+import { deviceTypeList, getNamePrefix } from '../data/deviceTypes';
 import type { BaseDevice, DeviceType } from '../types/topology';
 
 const props = defineProps<{ rootId: string }>();
@@ -12,19 +13,9 @@ interface Option {
   label: string;
 }
 
-const allOptions: Option[] = [
-  { value: 'workstation', label: '工作站' },
-  { value: 'laptop', label: '笔记本' },
-  { value: 'server', label: '服务器' },
-  { value: 'switch', label: '交换机' },
-  { value: 'router', label: '路由器' },
-  { value: 'ap', label: '无线 AP' },
-  { value: 'phone', label: '手机' },
-  { value: 'tablet', label: '平板' },
-  { value: 'printer', label: '打印机' },
-  { value: 'nas', label: 'NAS' },
-  { value: 'firewall', label: '防火墙' },
-];
+const allOptions = computed<Option[]>(() =>
+  deviceTypeList.map((t) => ({ value: t.id, label: t.label })),
+);
 
 const selectedType = ref<DeviceType>('workstation');
 const customName = ref('');
@@ -57,22 +48,8 @@ watch(
 const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
 
 function defaultName(): string {
-  const t = selectedType.value;
   const stamp = Math.floor(Math.random() * 900 + 100);
-  const map: Record<DeviceType, string> = {
-    workstation: `WS-NEW-${stamp}`,
-    laptop: `LAPTOP-NEW-${stamp}`,
-    server: `SRV-NEW-${stamp}`,
-    switch: `SW-NEW-${stamp}`,
-    router: `RT-NEW-${stamp}`,
-    ap: `AP-NEW-${stamp}`,
-    phone: `PHONE-NEW-${stamp}`,
-    tablet: `PAD-NEW-${stamp}`,
-    printer: `PRT-NEW-${stamp}`,
-    nas: `NAS-NEW-${stamp}`,
-    firewall: `FW-NEW-${stamp}`,
-  };
-  return map[t];
+  return `${getNamePrefix(selectedType.value)}-${stamp}`;
 }
 
 function defaultIp(): string {

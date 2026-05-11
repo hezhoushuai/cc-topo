@@ -1,6 +1,7 @@
 import { reactive } from 'vue';
-import type { BaseDevice, DeviceType, LinkKind, NicInfo } from '../types/topology';
-import { PORT_COUNT, portIdLeft, portIdRight } from '../utils/ports';
+import type { BaseDevice, DeviceType, NicInfo } from '../types/topology';
+import { getPortCount, portIdLeft, portIdRight } from '../utils/ports';
+import { deriveNicKind } from '../data/deviceTypes';
 import { patchNic as apiPatchNic } from '../api/index';
 
 const nicsByDevice = reactive<Record<string, NicInfo[]>>({});
@@ -14,20 +15,13 @@ function generateMac(): string {
   return [hex2(), hex2(), hex2(), hex2(), hex2(), hex2()].join(':').toUpperCase();
 }
 
-function deriveKind(type: DeviceType, side: 'left' | 'right'): LinkKind {
-  if (type === 'ap' && side === 'right') return 'wireless';
-  if ((type === 'phone' || type === 'tablet') && side === 'right') return 'wireless';
-  if (type === 'laptop' && side === 'right') return 'wireless';
-  return 'wired';
-}
-
 function deriveName(
   type: DeviceType,
   side: 'left' | 'right',
   index: number,
   leftCount: number,
 ): string {
-  const isWifi = deriveKind(type, side) === 'wireless';
+  const isWifi = deriveNicKind(type, side) === 'wireless';
   if (isWifi) return `wlan${index}`;
   if (type === 'switch') return side === 'left' ? `Gi0/${index + 1}` : `Gi0/${leftCount + index + 1}`;
   return side === 'left' ? `ext${index}` : `int${index}`;
@@ -46,7 +40,7 @@ function gatewayOf(baseIp: string): string {
 
 export function ensureNicsFor(device: BaseDevice): NicInfo[] {
   if (nicsByDevice[device.id]) return nicsByDevice[device.id];
-  const cfg = PORT_COUNT[device.type];
+  const cfg = getPortCount(device.type);
   const out: NicInfo[] = [];
 
   for (let i = 0; i < cfg.left; i++) {
@@ -59,7 +53,7 @@ export function ensureNicsFor(device: BaseDevice): NicInfo[] {
       ip: i === 0 ? device.ip : ipFromBase(device.ip, 100 + i),
       netmask: '255.255.255.0',
       gateway: gatewayOf(device.ip),
-      kind: deriveKind(device.type, 'left'),
+      kind: deriveNicKind(device.type, 'left'),
     });
   }
   for (let i = 0; i < cfg.right; i++) {
@@ -72,7 +66,7 @@ export function ensureNicsFor(device: BaseDevice): NicInfo[] {
       ip: ipFromBase(device.ip, 50 + i),
       netmask: '255.255.255.0',
       gateway: gatewayOf(device.ip),
-      kind: deriveKind(device.type, 'right'),
+      kind: deriveNicKind(device.type, 'right'),
     });
   }
   nicsByDevice[device.id] = out;

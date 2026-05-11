@@ -10,7 +10,7 @@ import type {
   TogglePortInfo,
   Topology,
 } from '../types/topology';
-import { PORT_COUNT, portIdLeft, portIdRight } from '../utils/ports';
+import { getPortCount, portIdLeft, portIdRight } from '../utils/ports';
 import { ensureNicsFor } from '../store/nics';
 import { getAdditions } from '../store/additions';
 import { isRemovedDevice } from '../store/removals';
@@ -67,7 +67,7 @@ interface PortAlloc {
 function getAlloc(map: Map<string, PortAlloc>, id: string, type: DeviceType): PortAlloc {
   let a = map.get(id);
   if (!a) {
-    const c = PORT_COUNT[type];
+    const c = getPortCount(type);
     a = { rightIdx: 0, rightCount: c.right };
     map.set(id, a);
   }
@@ -482,7 +482,7 @@ export function buildLayout(
     let portCount: { left: number; right: number };
     if (rec.role === 'center') {
       const alloc = ports.get(rec.id);
-      const base  = PORT_COUNT[rec.device.type];
+      const base  = getPortCount(rec.device.type);
       portCount = {
         left:  Math.max(base.left,  leftPortIdx.get(rec.id) ?? 0),
         right: Math.max(base.right, alloc?.rightIdx ?? 0),
