@@ -42,6 +42,13 @@ export const devices: Record<string, MockDevice> = {
   'pc-hr-09':        { id: 'pc-hr-09',        name: 'WORKSTATION-HR-09',   type: 'workstation', ip: '10.10.30.42', status: 'online'  },
   'pad-mgr-02':      { id: 'pad-mgr-02',      name: 'TABLET-MGR-02',       type: 'tablet',      ip: '10.10.60.18', status: 'online'  },
   'rt-campus-gw':    { id: 'rt-campus-gw',    name: 'RT-CAMPUS-GW',        type: 'router',      ip: '10.0.0.254',  status: 'online'  },
+  'sw-fin-ap':       { id: 'sw-fin-ap',       name: 'SW-FIN-AP',           type: 'switch',      ip: '10.10.20.1',  status: 'online'  },
+  'phone-fin-03':    { id: 'phone-fin-03',    name: 'PHONE-FIN-03',        type: 'phone',       ip: '10.10.20.21', status: 'online',   isChild: true },
+  'phone-fin-04':    { id: 'phone-fin-04',    name: 'PHONE-FIN-04',        type: 'phone',       ip: '10.10.20.22', status: 'online',   isChild: true },
+  'pad-fin-01':      { id: 'pad-fin-01',      name: 'TABLET-FIN-01',       type: 'tablet',      ip: '10.10.20.31', status: 'online',   isChild: true },
+  'laptop-fin-02':   { id: 'laptop-fin-02',   name: 'LAPTOP-FIN-02',       type: 'laptop',      ip: '10.10.20.41', status: 'warning',  isChild: true, unreachable: true },
+  'sat-gw-01':       { id: 'sat-gw-01',       name: 'SAT-GW-01',           type: 'router',      ip: '172.16.99.1', status: 'online'  },
+  'sat-link-rd':     { id: 'sat-link-rd',     name: 'SAT-LINK-RD',         type: 'router',      ip: '172.16.99.21',status: 'online',   isChild: true },
   'sw-core-01':      { id: 'sw-core-01',      name: 'SW-CORE-01',          type: 'switch',      ip: '10.0.0.1',    status: 'online'  },
   'srv-fin-db':      { id: 'srv-fin-db',      name: 'SRV-FIN-DB',          type: 'server',      ip: '10.20.0.21',  status: 'online',   isChild: true },
   'srv-erp-app':     { id: 'srv-erp-app',     name: 'SRV-ERP-APP',         type: 'server',      ip: '10.20.0.22',  status: 'online',   isChild: true },
@@ -92,9 +99,14 @@ export const devices: Record<string, MockDevice> = {
 export const branches: MockBranch[] = [
   // ── pc-fin-01 ──────────────────────────────────────────────
   {
-    id: 'b-fin-upstream', rootId: 'pc-fin-01', kind: 'wired', side: 'left', position: 0,
-    hub: { id: 'rt-campus-gw', name: 'RT-CAMPUS-GW', type: 'router', ip: '10.0.0.254', status: 'online' },
-    children: [],
+    id: 'b-fin-upstream', rootId: 'pc-fin-01', kind: 'wireless', side: 'left', position: 0,
+    hub: { id: 'sw-fin-ap', name: 'SW-FIN-AP', type: 'switch', ip: '10.10.20.1', status: 'online' },
+    children: [
+      { id: 'phone-fin-03',  name: 'PHONE-FIN-03',  type: 'phone',  ip: '10.10.20.21', status: 'online',  isChild: true },
+      { id: 'phone-fin-04',  name: 'PHONE-FIN-04',  type: 'phone',  ip: '10.10.20.22', status: 'online',  isChild: true },
+      { id: 'pad-fin-01',    name: 'TABLET-FIN-01', type: 'tablet', ip: '10.10.20.31', status: 'online',  isChild: true },
+      { id: 'laptop-fin-02', name: 'LAPTOP-FIN-02', type: 'laptop', ip: '10.10.20.41', status: 'warning', isChild: true, unreachable: true },
+    ],
   },
   {
     id: 'b-fin-core', rootId: 'pc-fin-01', kind: 'wired', side: 'right', position: 1,
@@ -121,6 +133,13 @@ export const branches: MockBranch[] = [
       { id: 'laptop-mgr-08', name: 'LAPTOP-MGR-08', type: 'laptop', ip: '10.10.60.12', status: 'warning', isChild: true, unreachable: true },
       { id: 'pad-mgr-02',    name: 'TABLET-MGR-02', type: 'tablet', ip: '10.10.60.18', status: 'warning', isChild: true, unreachable: true },
       { id: 'phone-fin-01',  name: 'PHONE-FIN-01',  type: 'phone',  ip: '10.10.60.31', status: 'warning', isChild: true, unreachable: true },
+    ],
+  },
+  {
+    id: 'b-fin-sat', rootId: 'pc-fin-01', kind: 'satellite', side: 'right', position: 4,
+    hub: { id: 'sat-gw-01', name: 'SAT-GW-01', type: 'router', ip: '172.16.99.1', status: 'online' },
+    children: [
+      { id: 'sat-link-rd', name: 'SAT-LINK-RD', type: 'router', ip: '172.16.99.21', status: 'online', isChild: true },
     ],
   },
 

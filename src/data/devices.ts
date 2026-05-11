@@ -64,15 +64,20 @@ const topologies: Record<string, Topology> = {
       {
         id: 'b-fin-upstream',
         side: 'left',
-        kind: 'wired',
+        kind: 'wireless',
         hub: {
-          id: 'rt-campus-gw',
-          name: 'RT-CAMPUS-GW',
-          type: 'router',
-          ip: '10.0.0.254',
+          id: 'sw-fin-ap',
+          name: 'SW-FIN-AP',
+          type: 'switch',
+          ip: '10.10.20.1',
           status: 'online',
         },
-        children: [],
+        children: [
+          { id: 'phone-fin-03', name: 'PHONE-FIN-03', type: 'phone', ip: '10.10.20.21', status: 'online', isChild: true },
+          { id: 'phone-fin-04', name: 'PHONE-FIN-04', type: 'phone', ip: '10.10.20.22', status: 'online', isChild: true },
+          { id: 'pad-fin-01', name: 'TABLET-FIN-01', type: 'tablet', ip: '10.10.20.31', status: 'online', isChild: true },
+          { id: 'laptop-fin-02', name: 'LAPTOP-FIN-02', type: 'laptop', ip: '10.10.20.41', status: 'warning', isChild: true, unreachable: true },
+        ],
       },
       {
         id: 'b-fin-core',
@@ -120,6 +125,20 @@ const topologies: Record<string, Topology> = {
           { id: 'laptop-mgr-08', name: 'LAPTOP-MGR-08', type: 'laptop', ip: '10.10.60.12', status: 'warning', isChild: true, unreachable: true },
           { id: 'pad-mgr-02', name: 'TABLET-MGR-02', type: 'tablet', ip: '10.10.60.18', status: 'warning', isChild: true, unreachable: true },
           { id: 'phone-fin-01', name: 'PHONE-FIN-01', type: 'phone', ip: '10.10.60.31', status: 'warning', isChild: true, unreachable: true },
+        ],
+      },
+      {
+        id: 'b-fin-sat',
+        kind: 'satellite',
+        hub: {
+          id: 'sat-gw-01',
+          name: 'SAT-GW-01',
+          type: 'router',
+          ip: '172.16.99.1',
+          status: 'online',
+        },
+        children: [
+          { id: 'sat-link-rd', name: 'SAT-LINK-RD', type: 'router', ip: '172.16.99.21', status: 'online', isChild: true },
         ],
       },
     ],

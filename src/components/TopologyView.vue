@@ -117,7 +117,22 @@ const layout = computed(() => {
   return buildLayout(t, getCollapsedSet(props.selectedId), props.selectedId);
 });
 
-const nodes = computed(() => layout.value.nodes);
+// 记录用户手动拖动后的坐标，切换拓扑时清空
+const draggedPositions = reactive<Record<string, { x: number; y: number }>>({});
+
+watch(() => props.selectedId, () => {
+  Object.keys(draggedPositions).forEach((k) => delete draggedPositions[k]);
+});
+
+function onNodeDragStop({ node }: { node: { id: string; position: { x: number; y: number } } }): void {
+  draggedPositions[node.id] = { x: node.position.x, y: node.position.y };
+}
+
+const nodes = computed(() =>
+  layout.value.nodes.map((n) =>
+    draggedPositions[n.id] ? { ...n, position: draggedPositions[n.id] } : n,
+  ),
+);
 const edges = computed(() => layout.value.edges);
 
 const nodeTypes = { device: markRaw(DeviceNode) };
@@ -166,6 +181,7 @@ defineExpose({
       @pane-ready="onPaneReady"
       @pane-click="onPaneClick"
       @move-start="onPaneClick"
+      @node-drag-stop="onNodeDragStop"
     >
       <Background pattern-color="#1f2a44" :gap="22" :size="1.4" />
       <Controls
@@ -174,5 +190,65 @@ defineExpose({
         class="!bg-slate-900/80 !border !border-slate-700 !rounded-lg overflow-hidden"
       />
     </VueFlow>
+    <div class="edge-legend">
+      <div class="legend-title">连接类型</div>
+      <div class="legend-row">
+        <svg width="40" height="10" viewBox="0 0 40 10">
+          <line x1="0" y1="5" x2="40" y2="5" stroke="#22d3ee" stroke-width="1.8" />
+        </svg>
+        <span>有线</span>
+      </div>
+      <div class="legend-row">
+        <svg width="40" height="10" viewBox="0 0 40 10">
+          <line x1="0" y1="5" x2="40" y2="5" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="8 6" />
+        </svg>
+        <span>无线</span>
+      </div>
+      <div class="legend-row">
+        <svg width="40" height="10" viewBox="0 0 40 10">
+          <line x1="0" y1="5" x2="40" y2="5" stroke="#a855f7" stroke-width="1.8" stroke-dasharray="2 4 10 4" />
+        </svg>
+        <span>卫星</span>
+      </div>
+      <div class="legend-row">
+        <svg width="40" height="10" viewBox="0 0 40 10">
+          <line x1="0" y1="5" x2="40" y2="5" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="6 4" />
+        </svg>
+        <span>不通</span>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.edge-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 10;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgb(51, 65, 85);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: rgb(203, 213, 225);
+  pointer-events: none;
+  user-select: none;
+  backdrop-filter: blur(4px);
+}
+.legend-title {
+  font-size: 11px;
+  color: rgb(148, 163, 184);
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 16px;
+}
+.legend-row svg {
+  flex-shrink: 0;
+}
+</style>
