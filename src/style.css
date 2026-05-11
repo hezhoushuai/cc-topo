@@ -184,6 +184,19 @@ body,
   display: none;
 }
 
+/* 设备图标：用 mask-image 将 SVG 作为遮罩，background-color 控制实际颜色，
+   这样图标可随主题色变化。SVG 内的 fill/stroke 颜色都不再生效，
+   仅图形 alpha 通道有效（保留 viewBox 即可）。 */
+.device-type-icon {
+  display: inline-block;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
 .metric-bar {
   height: 4px;
   border-radius: 2px;

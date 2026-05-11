@@ -10,6 +10,9 @@ export interface DeviceTypeDef {
   id: string;
   label: string;
   icon: string;
+  /** true: 用 <img> 渲染，保留图标原色（适合彩色 PNG）；
+   *  false / 缺省: 用 CSS mask-image，图标颜色随主题色变化（适合单色线稿 SVG） */
+  iconColored?: boolean;
   color: [number, number, number];
   ports: { left: number; right: number };
   capacity: { cpuCores: number; memMB: number; diskGB: number };
@@ -25,7 +28,7 @@ interface DeviceTypesJson {
 const DEFAULT_TYPE: DeviceTypeDef = {
   id: '_unknown',
   label: '设备',
-  icon: '❓',
+  icon: '/icons/unknown.svg',
   color: [148, 163, 184],
   ports: { left: 1, right: 1 },
   capacity: { cpuCores: 1, memMB: 1024, diskGB: 8 },
@@ -44,6 +47,10 @@ export function getTypeDef(id: string): DeviceTypeDef {
 
 export function getTypeIcon(id: string): string {
   return getTypeDef(id).icon;
+}
+
+export function isTypeIconColored(id: string): boolean {
+  return getTypeDef(id).iconColored === true;
 }
 
 export function getTypeLabel(id: string): string {

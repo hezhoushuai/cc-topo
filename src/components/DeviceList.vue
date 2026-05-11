@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { selectableDevices } from '../data/devices';
 import { getTypeTheme } from '../utils/theme';
-import { getTypeIcon } from '../data/deviceTypes';
+import { getTypeIcon, isTypeIconColored } from '../data/deviceTypes';
 import type { SelectableDevice } from '../types/topology';
 
 const props = defineProps<{ selectedIds: string[]; collapsed: boolean }>();
@@ -90,7 +90,23 @@ function onClick(e: MouseEvent, id: string): void {
           }"
           @click="(e) => onClick(e, d.id)"
         >
-          {{ typeIcon(d.type) }}
+          <img
+            v-if="isTypeIconColored(d.type)"
+            :src="typeIcon(d.type)"
+            :alt="d.type"
+            class="size-5 select-none"
+            draggable="false"
+          />
+          <span
+            v-else
+            class="device-type-icon size-5 select-none"
+            :style="{
+              backgroundColor: getTypeTheme(d.type).primaryLight,
+              WebkitMaskImage: `url(${typeIcon(d.type)})`,
+              maskImage: `url(${typeIcon(d.type)})`,
+            }"
+            :title="d.type"
+          ></span>
           <span
             v-if="selectedSet.has(d.id)"
             class="absolute -top-1 -right-1 size-3.5 rounded-full bg-cyan-400 text-[8px] font-bold text-slate-950 grid place-items-center shadow"
@@ -162,13 +178,28 @@ function onClick(e: MouseEvent, id: string): void {
         >
           <div class="flex items-start gap-3">
             <span
-              class="size-7 mt-0.5 grid place-items-center rounded-md border text-[15px] select-none shrink-0 relative"
+              class="size-7 mt-0.5 grid place-items-center rounded-md border select-none shrink-0 relative"
               :style="{
                 background: getTypeTheme(d.type).iconBg,
                 borderColor: getTypeTheme(d.type).iconBorder,
               }"
             >
-              {{ typeIcon(d.type) }}
+              <img
+                v-if="isTypeIconColored(d.type)"
+                :src="typeIcon(d.type)"
+                :alt="d.type"
+                class="size-[18px]"
+                draggable="false"
+              />
+              <span
+                v-else
+                class="device-type-icon size-[18px]"
+                :style="{
+                  backgroundColor: getTypeTheme(d.type).primaryLight,
+                  WebkitMaskImage: `url(${typeIcon(d.type)})`,
+                  maskImage: `url(${typeIcon(d.type)})`,
+                }"
+              ></span>
               <span
                 v-if="selectedSet.has(d.id)"
                 class="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-cyan-400 text-[9px] font-bold text-slate-950 grid place-items-center shadow"
