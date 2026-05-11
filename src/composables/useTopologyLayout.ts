@@ -392,9 +392,10 @@ export function buildLayout(
     if (cached !== undefined) return cached;
     const rec = nodeRecords.get(nodeId);
     if (!rec) { subtreePingCache.set(nodeId, false); return false; }
-    let on = rec.role !== 'center' && (
+    // 只有可达设备才能产生流动动画：不可达节点边线变红已由 edge-unreachable 处理，
+    // 但不应向父节点传播"连通确认"状态
+    let on = rec.role !== 'center' && !rec.device.unreachable && (
       rec.device.isChild === true ||
-      rec.device.unreachable === true ||
       isPingOn(selectedRootId, rec.device.id)
     );
     // center 节点不向上传播子树 ping 状态，避免左侧分支边线误触发流动动画
