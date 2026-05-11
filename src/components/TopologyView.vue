@@ -117,7 +117,22 @@ const layout = computed(() => {
   return buildLayout(t, getCollapsedSet(props.selectedId), props.selectedId);
 });
 
-const nodes = computed(() => layout.value.nodes);
+// 记录用户手动拖动后的坐标，切换拓扑时清空
+const draggedPositions = reactive<Record<string, { x: number; y: number }>>({});
+
+watch(() => props.selectedId, () => {
+  Object.keys(draggedPositions).forEach((k) => delete draggedPositions[k]);
+});
+
+function onNodeDragStop({ node }: { node: { id: string; position: { x: number; y: number } } }): void {
+  draggedPositions[node.id] = { x: node.position.x, y: node.position.y };
+}
+
+const nodes = computed(() =>
+  layout.value.nodes.map((n) =>
+    draggedPositions[n.id] ? { ...n, position: draggedPositions[n.id] } : n,
+  ),
+);
 const edges = computed(() => layout.value.edges);
 
 const nodeTypes = { device: markRaw(DeviceNode) };
@@ -166,6 +181,7 @@ defineExpose({
       @pane-ready="onPaneReady"
       @pane-click="onPaneClick"
       @move-start="onPaneClick"
+      @node-drag-stop="onNodeDragStop"
     >
       <Background pattern-color="#1f2a44" :gap="22" :size="1.4" />
       <Controls
