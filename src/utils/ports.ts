@@ -1,23 +1,14 @@
-import type { DeviceType } from '../types/topology';
+import { getTypeDef } from '../data/deviceTypes';
 
 export interface PortConfig {
   left: number;
   right: number;
 }
 
-export const PORT_COUNT: Record<DeviceType, PortConfig> = {
-  workstation: { left: 1, right: 1 },
-  laptop:      { left: 1, right: 1 },
-  server:      { left: 2, right: 2 },
-  switch:      { left: 2, right: 4 },
-  router:      { left: 2, right: 3 },
-  ap:          { left: 1, right: 3 },
-  phone:       { left: 1, right: 1 },
-  tablet:      { left: 1, right: 1 },
-  printer:     { left: 1, right: 1 },
-  nas:         { left: 2, right: 2 },
-  firewall:    { left: 2, right: 3 },
-};
+export function getPortCount(type: string): PortConfig {
+  const def = getTypeDef(type);
+  return def.ports;
+}
 
 export function portPositions(n: number): number[] {
   const r: number[] = [];

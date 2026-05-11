@@ -1,4 +1,5 @@
-import type { DeviceType } from '../types/topology';
+// Theme 派生自 device-types.json 中每个类型的 color 三元组
+import { getTypeDef } from '../data/deviceTypes';
 
 export interface TypeTheme {
   label: string;
@@ -32,16 +33,7 @@ function makeTheme(label: string, rgb: [number, number, number]): TypeTheme {
   };
 }
 
-export const TYPE_THEME: Record<DeviceType, TypeTheme> = {
-  workstation: makeTheme('工作站', [59, 130, 246]),
-  laptop:      makeTheme('笔记本', [99, 102, 241]),
-  server:      makeTheme('服务器', [139, 92, 246]),
-  switch:      makeTheme('交换机', [6, 182, 212]),
-  router:      makeTheme('路由器', [20, 184, 166]),
-  ap:          makeTheme('无线 AP', [245, 158, 11]),
-  phone:       makeTheme('手机', [217, 70, 239]),
-  tablet:      makeTheme('平板', [236, 72, 153]),
-  printer:     makeTheme('打印机', [148, 163, 184]),
-  nas:         makeTheme('NAS', [16, 185, 129]),
-  firewall:    makeTheme('防火墙', [244, 63, 94]),
-};
+export function getTypeTheme(type: string): TypeTheme {
+  const def = getTypeDef(type);
+  return makeTheme(def.label, def.color);
+}

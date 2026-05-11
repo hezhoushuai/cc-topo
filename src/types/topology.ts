@@ -1,15 +1,6 @@
-export type DeviceType =
-  | 'workstation'
-  | 'switch'
-  | 'router'
-  | 'server'
-  | 'ap'
-  | 'laptop'
-  | 'phone'
-  | 'tablet'
-  | 'printer'
-  | 'nas'
-  | 'firewall';
+// 设备类型来自 public/data/device-types.json，运行时可扩展，
+// 因此不再使用字面量联合类型，改为字符串别名。
+export type DeviceType = string;
 
 export type LinkKind = 'wired' | 'wireless' | 'satellite';
 

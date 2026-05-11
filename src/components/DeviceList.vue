@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { selectableDevices } from '../data/devices';
-import { TYPE_THEME } from '../utils/theme';
-import type { DeviceType, SelectableDevice } from '../types/topology';
+import { getTypeTheme } from '../utils/theme';
+import { getTypeIcon } from '../data/deviceTypes';
+import type { SelectableDevice } from '../types/topology';
 
 const props = defineProps<{ selectedIds: string[]; collapsed: boolean }>();
 const emit = defineEmits<{
@@ -23,19 +24,7 @@ const filtered = computed<SelectableDevice[]>(() => {
   );
 });
 
-const typeIcon: Record<DeviceType, string> = {
-  workstation: '🖥',
-  laptop: '💻',
-  server: '🗄',
-  switch: '🔀',
-  router: '🛰',
-  ap: '📡',
-  phone: '📱',
-  tablet: '📲',
-  printer: '🖨',
-  nas: '💾',
-  firewall: '🛡',
-};
+function typeIcon(type: string): string { return getTypeIcon(type); }
 
 const statusColor: Record<NonNullable<SelectableDevice['status']>, string> = {
   online: 'bg-emerald-400',
@@ -91,17 +80,17 @@ function onClick(e: MouseEvent, id: string): void {
             selectedSet.has(d.id) ? '' : 'opacity-70 hover:opacity-100',
           ]"
           :style="{
-            background: TYPE_THEME[d.type].iconBg,
+            background: getTypeTheme(d.type).iconBg,
             borderColor: selectedSet.has(d.id)
-              ? TYPE_THEME[d.type].primary
-              : TYPE_THEME[d.type].iconBorder,
+              ? getTypeTheme(d.type).primary
+              : getTypeTheme(d.type).iconBorder,
             boxShadow: selectedSet.has(d.id)
-              ? `0 0 8px ${TYPE_THEME[d.type].glow}`
+              ? `0 0 8px ${getTypeTheme(d.type).glow}`
               : 'none',
           }"
           @click="(e) => onClick(e, d.id)"
         >
-          {{ typeIcon[d.type] }}
+          {{ typeIcon(d.type) }}
           <span
             v-if="selectedSet.has(d.id)"
             class="absolute -top-1 -right-1 size-3.5 rounded-full bg-cyan-400 text-[8px] font-bold text-slate-950 grid place-items-center shadow"
@@ -175,11 +164,11 @@ function onClick(e: MouseEvent, id: string): void {
             <span
               class="size-7 mt-0.5 grid place-items-center rounded-md border text-[15px] select-none shrink-0 relative"
               :style="{
-                background: TYPE_THEME[d.type].iconBg,
-                borderColor: TYPE_THEME[d.type].iconBorder,
+                background: getTypeTheme(d.type).iconBg,
+                borderColor: getTypeTheme(d.type).iconBorder,
               }"
             >
-              {{ typeIcon[d.type] }}
+              {{ typeIcon(d.type) }}
               <span
                 v-if="selectedSet.has(d.id)"
                 class="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-cyan-400 text-[9px] font-bold text-slate-950 grid place-items-center shadow"
@@ -204,9 +193,9 @@ function onClick(e: MouseEvent, id: string): void {
               </div>
               <div
                 class="text-[10px] mt-0.5 truncate font-medium"
-                :style="{ color: TYPE_THEME[d.type].badgeText }"
+                :style="{ color: getTypeTheme(d.type).badgeText }"
               >
-                {{ TYPE_THEME[d.type].label }}
+                {{ getTypeTheme(d.type).label }}
               </div>
               <div class="text-[11px] text-slate-500 mt-0.5 truncate font-mono">{{ d.ip }}</div>
               <div class="text-[10.5px] text-slate-600 mt-0.5 truncate">{{ d.description }}</div>

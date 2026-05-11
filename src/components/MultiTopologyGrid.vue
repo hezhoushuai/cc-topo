@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import TopologyView from './TopologyView.vue';
 import { selectableDevices } from '../data/devices';
-import { TYPE_THEME } from '../utils/theme';
+import { getTypeTheme } from '../utils/theme';
 
 const props = defineProps<{ ids: string[]; editMode: boolean }>();
 const emit = defineEmits<{
@@ -221,7 +221,7 @@ function moveBy(idx: number, delta: number): void {
           <span
             v-if="deviceFor(id)"
             class="text-[11px] font-semibold"
-            :style="{ color: TYPE_THEME[deviceFor(id)!.type].badgeText }"
+            :style="{ color: getTypeTheme(deviceFor(id)!.type).badgeText }"
           >
             {{ deviceFor(id)?.name }}
           </span>

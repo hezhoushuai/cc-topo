@@ -8,10 +8,11 @@ import { openPortMenu, openConfigDialog } from '../store/ui';
 import { PROTOCOLS } from '../store/ping';
 import type { Protocol } from '../store/ping';
 import { PingServiceKey, RemoveDeviceKey, TogglePortKey } from '../composables/topologyKey';
-import { PORT_COUNT, portIdLeft, portIdRight, portPositions } from '../utils/ports';
-import { CAPACITY, fmtCpuUsage, fmtDiskUsage, fmtMemUsage } from '../utils/capacity';
-import { TYPE_THEME } from '../utils/theme';
-import type { DeviceType, NicInfo, NodeData, TogglePortInfo } from '../types/topology';
+import { getPortCount, portIdLeft, portIdRight, portPositions } from '../utils/ports';
+import { getCapacity, fmtCpuUsage, fmtDiskUsage, fmtMemUsage } from '../utils/capacity';
+import { getTypeTheme } from '../utils/theme';
+import { getTypeIcon, getTypeLabel } from '../data/deviceTypes';
+import type { NicInfo, NodeData, TogglePortInfo } from '../types/topology';
 
 const props = defineProps<NodeProps<NodeData>>();
 
@@ -19,12 +20,12 @@ const device = computed(() => props.data.device);
 const role = computed(() => props.data.role);
 const isCenter = computed(() => role.value === 'center');
 const m = computed(() => metricsOf(device.value.id));
-const cap = computed(() => CAPACITY[device.value.type]);
-const theme = computed(() => TYPE_THEME[device.value.type]);
+const cap = computed(() => getCapacity(device.value.type));
+const theme = computed(() => getTypeTheme(device.value.type));
 
 const isOffline = computed(() => device.value.status === 'offline');
 
-const portCfg = computed(() => props.data.portCount ?? PORT_COUNT[device.value.type]);
+const portCfg = computed(() => props.data.portCount ?? getPortCount(device.value.type));
 const leftPositions = computed(() => portPositions(portCfg.value.left));
 const rightPositions = computed(() => portPositions(portCfg.value.right));
 
@@ -170,33 +171,8 @@ function onTogglePing(): void {
   pingService?.toggle(device.value.id);
 }
 
-const typeLabel: Record<DeviceType, string> = {
-  workstation: '工作站',
-  laptop: '笔记本',
-  server: '服务器',
-  switch: '交换机',
-  router: '路由器',
-  ap: '无线AP',
-  phone: '手机',
-  tablet: '平板',
-  printer: '打印机',
-  nas: 'NAS',
-  firewall: '防火墙',
-};
-
-const typeIcon: Record<DeviceType, string> = {
-  workstation: '🖥',
-  laptop: '💻',
-  server: '🗄',
-  switch: '🔀',
-  router: '🛰',
-  ap: '📡',
-  phone: '📱',
-  tablet: '📲',
-  printer: '🖨',
-  nas: '💾',
-  firewall: '🛡',
-};
+function typeLabel(type: string): string { return getTypeLabel(type); }
+function typeIcon(type: string): string { return getTypeIcon(type); }
 
 function metricColor(v: number): string {
   if (isOffline.value) return '#475569';
@@ -369,7 +345,7 @@ function fmtPct(v: number): string {
           class="shrink-0 size-8 grid place-items-center rounded border"
           :style="iconStyle"
         >
-          <span class="text-[17px] leading-none">{{ typeIcon[device.type] }}</span>
+          <span class="text-[17px] leading-none">{{ typeIcon(device.type) }}</span>
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
@@ -389,7 +365,7 @@ function fmtPct(v: number): string {
             ></span>
           </div>
           <div class="text-[10px] truncate leading-tight">
-            <span class="font-medium" :style="typeBadgeStyle">{{ typeLabel[device.type] }}</span>
+            <span class="font-medium" :style="typeBadgeStyle">{{ typeLabel(device.type) }}</span>
             <span class="text-slate-600 mx-1">·</span>
             <span :class="['font-mono', isOffline ? 'text-slate-600' : 'text-slate-300']">{{ device.ip }}</span>
           </div>
@@ -462,7 +438,7 @@ function fmtPct(v: number): string {
           class="shrink-0 size-8 grid place-items-center rounded border"
           :style="iconStyle"
         >
-          <span class="text-[17px] leading-none">{{ typeIcon[device.type] }}</span>
+          <span class="text-[17px] leading-none">{{ typeIcon(device.type) }}</span>
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
@@ -482,7 +458,7 @@ function fmtPct(v: number): string {
             ></span>
           </div>
           <div class="text-[10px] truncate leading-tight">
-            <span class="font-medium" :style="typeBadgeStyle">{{ typeLabel[device.type] }}</span>
+            <span class="font-medium" :style="typeBadgeStyle">{{ typeLabel(device.type) }}</span>
             <span class="text-slate-600 mx-1">·</span>
             <span :class="['font-mono', isOffline ? 'text-slate-600' : 'text-slate-300']">{{ device.ip }}</span>
           </div>
