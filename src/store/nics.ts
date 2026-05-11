@@ -1,6 +1,7 @@
 import { reactive } from 'vue';
 import type { BaseDevice, DeviceType, LinkKind, NicInfo } from '../types/topology';
 import { PORT_COUNT, portIdLeft, portIdRight } from '../utils/ports';
+import { patchNic as apiPatchNic } from '../api/index';
 
 const nicsByDevice = reactive<Record<string, NicInfo[]>>({});
 const deviceById: Record<string, BaseDevice> = {};
@@ -101,4 +102,8 @@ export function updateNic(
   const idx = list.findIndex((n) => n.id === nicId);
   if (idx === -1) return;
   list[idx] = { ...list[idx], ...patch };
+  // Persist to backend
+  apiPatchNic(deviceId, nicId, patch).catch((err) => {
+    console.warn('[nics] Failed to persist NIC update:', err);
+  });
 }

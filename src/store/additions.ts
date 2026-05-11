@@ -1,5 +1,6 @@
 import { reactive } from 'vue';
 import type { BaseDevice, LinkKind } from '../types/topology';
+import { postAddition as apiPostAddition, deleteAddition as apiDeleteAddition } from '../api/index';
 
 export interface DeviceAddition {
   id: string;
@@ -16,6 +17,10 @@ export function addDevice(selectedRootId: string, addition: DeviceAddition): voi
     additionsBySelected[selectedRootId] = [];
   }
   additionsBySelected[selectedRootId].push(addition);
+  // Persist to backend (fire-and-forget, non-blocking)
+  apiPostAddition(selectedRootId, addition).catch((err) => {
+    console.warn('[additions] Failed to persist addition:', err);
+  });
 }
 
 export function getAdditions(selectedRootId: string): DeviceAddition[] {
@@ -26,7 +31,17 @@ export function removeDevice(selectedRootId: string, deviceId: string): void {
   const list = additionsBySelected[selectedRootId];
   if (!list) return;
   const idx = list.findIndex((a) => a.id === deviceId);
-  if (idx !== -1) list.splice(idx, 1);
+  if (idx !== -1) {
+    list.splice(idx, 1);
+    // Persist removal to backend
+    apiDeleteAddition(selectedRootId, deviceId).catch((err) => {
+      console.warn('[additions] Failed to delete addition:', err);
+    });
+  }
+}
+
+export function initAdditions(rootId: string, additions: DeviceAddition[]): void {
+  additionsBySelected[rootId] = [...additions];
 }
 
 let counter = 1;
