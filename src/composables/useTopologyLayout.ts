@@ -397,7 +397,8 @@ export function buildLayout(
       rec.device.unreachable === true ||
       isPingOn(selectedRootId, rec.device.id)
     );
-    if (!on) on = (childrenOf.get(nodeId) ?? []).some((k) => isSubtreePinged(k));
+    // center 节点不向上传播子树 ping 状态，避免左侧分支边线误触发流动动画
+    if (!on && rec.role !== 'center') on = (childrenOf.get(nodeId) ?? []).some((k) => isSubtreePinged(k));
     subtreePingCache.set(nodeId, on);
     return on;
   }
