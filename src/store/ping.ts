@@ -1,4 +1,5 @@
 import { onBeforeUnmount, onMounted, reactive } from 'vue';
+import { putPingState as apiPutPingState } from '../api/index';
 
 const HISTORY_SIZE = 20;
 const TICK_MS = 1500;
@@ -36,13 +37,36 @@ export function isPingOn(rootId: string, targetId: string): boolean {
 export function togglePing(rootId: string, targetId: string): void {
   const k = pingKey(rootId, targetId);
   const cur = stateByPair[k];
+  let newEnabled: boolean;
   if (!cur) {
     stateByPair[k] = { enabled: true, history: [], protocols: newProtocolState() };
+    newEnabled = true;
   } else {
     cur.enabled = !cur.enabled;
+    newEnabled = cur.enabled;
     if (cur.enabled) {
       cur.history = [];
       cur.protocols = newProtocolState();
+    }
+  }
+  // Persist to backend
+  apiPutPingState(rootId, targetId, newEnabled).catch((err) => {
+    console.warn('[ping] Failed to persist ping state:', err);
+  });
+}
+
+export interface PingStateEntry {
+  targetId: string;
+  enabled: boolean;
+}
+
+export function initPingStates(rootId: string, states: PingStateEntry[]): void {
+  for (const s of states) {
+    const k = pingKey(rootId, s.targetId);
+    if (s.enabled && !stateByPair[k]) {
+      stateByPair[k] = { enabled: true, history: [], protocols: newProtocolState() };
+    } else if (stateByPair[k]) {
+      stateByPair[k].enabled = s.enabled;
     }
   }
 }

@@ -8,18 +8,36 @@ import { buildLayout } from '../composables/useTopologyLayout';
 import { useMetrics } from '../composables/useMetrics';
 import { useTrafficTicker } from '../store/traffic';
 import { closePortMenu } from '../store/ui';
-import { enablePing, getPingSummary, isPingOn, togglePing, usePingTicker } from '../store/ping';
-import { getAdditions, removeDevice } from '../store/additions';
-import { removeStaticDevice } from '../store/removals';
+import { enablePing, getPingSummary, isPingOn, togglePing, usePingTicker, initPingStates } from '../store/ping';
+import { getAdditions, removeDevice, initAdditions } from '../store/additions';
+import { removeStaticDevice, initRemovals } from '../store/removals';
 import { PingServiceKey, RemoveDeviceKey, TogglePortKey } from '../composables/topologyKey';
 import DeviceNode from './DeviceNode.vue';
 import TopologyEdge from './TopologyEdge.vue';
+import { fetchState, fetchPingStates } from '../api/index';
 
 const props = defineProps<{ selectedId: string }>();
 
 useMetrics();
 useTrafficTicker();
 usePingTicker();
+
+async function initFromApi(rootId: string): Promise<void> {
+  try {
+    const [state, pingStates] = await Promise.all([
+      fetchState(rootId),
+      fetchPingStates(rootId),
+    ]);
+    initAdditions(rootId, state.additions);
+    initRemovals(rootId, state.removals);
+    initPingStates(rootId, pingStates);
+  } catch (err) {
+    // Backend may not be running — silently degrade to in-memory only
+    console.warn('[TopologyView] Could not load state from API:', err);
+  }
+}
+
+watch(() => props.selectedId, initFromApi, { immediate: true });
 
 const vfId = `topo-${props.selectedId}`;
 const { fitView, findNode, setViewport, viewport } = useVueFlow(vfId);
