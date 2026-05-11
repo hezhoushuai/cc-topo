@@ -34,14 +34,27 @@ function heightOf(role: NodeRole): number {
 
 const WIRED = '#22d3ee';
 const WIRELESS = '#f59e0b';
+const SATELLITE = '#a855f7';
 const UNREACHABLE = '#f43f5e';
 
+function colorOf(kind: LinkKind): string {
+  if (kind === 'wireless') return WIRELESS;
+  if (kind === 'satellite') return SATELLITE;
+  return WIRED;
+}
+
+function dashOf(kind: LinkKind): string | undefined {
+  if (kind === 'wireless') return '8 6';
+  if (kind === 'satellite') return '2 4 10 4';
+  return undefined;
+}
+
 function edgeStyle(kind: LinkKind, unreachable: boolean) {
-  const color = unreachable ? UNREACHABLE : kind === 'wireless' ? WIRELESS : WIRED;
+  const color = unreachable ? UNREACHABLE : colorOf(kind);
   return {
     stroke: color,
     strokeWidth: unreachable ? 2.2 : 1.8,
-    strokeDasharray: unreachable ? '6 4' : kind === 'wireless' ? '8 6' : undefined,
+    strokeDasharray: unreachable ? '6 4' : dashOf(kind),
     filter: unreachable ? 'drop-shadow(0 0 3px rgba(244,63,94,0.5))' : undefined,
   } as Record<string, string | number | undefined>;
 }
@@ -83,6 +96,8 @@ interface EdgeSpec {
   targetPort: string;
   kind: LinkKind;
   hasMarker: boolean;
+  // 树形结构中靠近叶子节点的那一端（与 edge 物理 source/target 方向无关）
+  deepEnd: string;
 }
 
 export interface LayoutResult {
@@ -257,7 +272,7 @@ export function buildLayout(
       id: branch.id,
       source: topology.center.id, target: branch.hub.id,
       sourcePort: info.centerPort, targetPort: HUB_LEFT_PORT,
-      kind: branch.kind, hasMarker: true,
+      kind: branch.kind, hasMarker: true, deepEnd: branch.hub.id,
     });
     if (info.hubChildrenCollapsed) return;
     branch.children.forEach((child) => {
@@ -270,7 +285,7 @@ export function buildLayout(
         id: `${branch.id}__edge__${child.id}`,
         source: branch.hub.id, target: leafId,
         sourcePort: HUB_RIGHT_PORT, targetPort: LEAF_LEFT_PORT,
-        kind: branch.kind, hasMarker: false,
+        kind: branch.kind, hasMarker: false, deepEnd: leafId,
       });
     });
   });
@@ -288,7 +303,7 @@ export function buildLayout(
       id: branch.id,
       source: branch.hub.id, target: topology.center.id,
       sourcePort: HUB_RIGHT_PORT, targetPort: info.centerPort,
-      kind: branch.kind, hasMarker: true,
+      kind: branch.kind, hasMarker: true, deepEnd: branch.hub.id,
     });
     if (info.hubChildrenCollapsed) return;
     branch.children.forEach((child) => {
@@ -301,7 +316,7 @@ export function buildLayout(
         id: `${branch.id}__edge__${child.id}`,
         source: leafId, target: branch.hub.id,
         sourcePort: HUB_RIGHT_PORT, targetPort: HUB_LEFT_PORT,
-        kind: branch.kind, hasMarker: false,
+        kind: branch.kind, hasMarker: false, deepEnd: leafId,
       });
     });
   });
@@ -318,37 +333,79 @@ export function buildLayout(
   }
 
   const additions = getAdditions(selectedRootId);
-  const groupedByParent = new Map<string, typeof additions>();
+  // 按 (parent, side) 分组：center 的左/右端口可同时接收新增设备，分别放在两侧
+  type AdditionSide = 'left' | 'right';
+  function sideOf(parent: NodeRecord, parentNicId: string): AdditionSide {
+    if (parent.x < 0) return 'left';
+    if (parent.x > 0) return 'right';
+    return parentNicId.startsWith('lp-') ? 'left' : 'right';
+  }
+  interface AdditionGroup { parent: NodeRecord; side: AdditionSide; list: typeof additions }
+  const groupedByParentSide = new Map<string, AdditionGroup>();
   for (const add of additions) {
-    let arr = groupedByParent.get(add.parentDeviceId);
-    if (!arr) { arr = []; groupedByParent.set(add.parentDeviceId, arr); }
-    arr.push(add);
+    const parent = recordByDeviceId.get(add.parentDeviceId);
+    if (!parent) continue;
+    const side = sideOf(parent, add.parentNicId);
+    const key = `${parent.id}::${side}`;
+    let g = groupedByParentSide.get(key);
+    if (!g) { g = { parent, side, list: [] }; groupedByParentSide.set(key, g); }
+    g.list.push(add);
   }
 
-  for (const [parentDeviceId, group] of groupedByParent) {
-    const parent = recordByDeviceId.get(parentDeviceId);
-    if (!parent) continue;
-    const isLeftParent = parent.x < 0;
-    const colX = isLeftParent ? minLeftX - 60 - NODE_W : maxRightX + 60;
-    const stackH = group.length * LEAF_H + (group.length - 1) * ROW_GAP;
-    const stackTop = parent.y + heightOf(parent.role) / 2 - stackH / 2;
-    group.forEach((add, i) => {
+  // 用于避免卡片重叠：维护已占用的矩形列表
+  interface Box { x1: number; x2: number; y1: number; y2: number }
+  const occupiedBoxes: Box[] = Array.from(nodeRecords.values()).map((r) => ({
+    x1: r.x, x2: r.x + NODE_W, y1: r.y, y2: r.y + heightOf(r.role),
+  }));
+  function rangeOverlap(a1: number, a2: number, b1: number, b2: number): boolean {
+    return a1 < b2 && b1 < a2;
+  }
+  function findClearStackTop(colX: number, idealTop: number, stackLen: number): number {
+    const x1 = colX, x2 = colX + NODE_W;
+    let top = idealTop;
+    let safety = 200;
+    while (safety-- > 0) {
+      let conflict: Box | null = null;
+      for (let i = 0; i < stackLen; i++) {
+        const y1 = top + i * (LEAF_H + ROW_GAP);
+        const y2 = y1 + LEAF_H;
+        for (const b of occupiedBoxes) {
+          if (rangeOverlap(x1, x2, b.x1, b.x2) && rangeOverlap(y1, y2, b.y1, b.y2)) {
+            conflict = b; break;
+          }
+        }
+        if (conflict) break;
+      }
+      if (!conflict) return top;
+      top = conflict.y2 + ROW_GAP;
+    }
+    return top;
+  }
+
+  for (const { parent, side, list } of groupedByParentSide.values()) {
+    const isLeftSide = side === 'left';
+    const colX = isLeftSide ? minLeftX - 60 - NODE_W : maxRightX + 60;
+    const stackH = list.length * LEAF_H + (list.length - 1) * ROW_GAP;
+    const idealTop = parent.y + heightOf(parent.role) / 2 - stackH / 2;
+    const stackTop = findClearStackTop(colX, idealTop, list.length);
+    list.forEach((add, i) => {
       const newRec: NodeRecord = {
         id: add.id, device: applyOffline(add.device), role: 'leaf',
         x: colX, y: stackTop + i * (LEAF_H + ROW_GAP),
       };
       nodeRecords.set(add.id, newRec);
       recordByDeviceId.set(add.device.id, newRec);
+      occupiedBoxes.push({ x1: newRec.x, x2: newRec.x + NODE_W, y1: newRec.y, y2: newRec.y + LEAF_H });
       ensureNicsFor(add.device);
-      if (isLeftParent) {
-        // New device sits further left; its rp-0 connects to the hub's selected left port
+      if (isLeftSide) {
+        // 新设备位于父节点左侧；新设备的 rp-0 连接到父节点的左侧端口
         markActive(parent.id, add.parentNicId);
         markActive(add.id, HUB_RIGHT_PORT);
         edgeSpecs.push({
           id: `addition-edge-${add.id}`,
           source: add.id, target: parent.id,
           sourcePort: HUB_RIGHT_PORT, targetPort: add.parentNicId,
-          kind: add.kind, hasMarker: false,
+          kind: add.kind, hasMarker: false, deepEnd: add.id,
         });
       } else {
         markActive(parent.id, add.parentNicId);
@@ -357,29 +414,35 @@ export function buildLayout(
           id: `addition-edge-${add.id}`,
           source: parent.id, target: add.id,
           sourcePort: add.parentNicId, targetPort: LEAF_LEFT_PORT,
-          kind: add.kind, hasMarker: false,
+          kind: add.kind, hasMarker: false, deepEnd: add.id,
         });
       }
     });
-    if (isLeftParent) {
+    if (isLeftSide) {
       minLeftX = colX;
     } else {
       maxRightX = colX + NODE_W;
     }
   }
 
-  // --- Port connections ---
-  const childrenOf = new Map<string, string[]>();
+  // --- Port connections & tree-aware children (parent → deeper-tree child) ---
+  // 注意：subtreeChildren 与 edge 物理方向无关，永远沿"远离 center"方向遍历，
+  // 因此左侧分支也能正确识别 hub 下挂的叶子节点
+  const subtreeChildren = new Map<string, string[]>();
   const portConnByNode = new Map<string, Map<string, number>>();
   function bumpPortConn(nodeId: string, portId: string): void {
     let m = portConnByNode.get(nodeId);
     if (!m) { m = new Map(); portConnByNode.set(nodeId, m); }
     m.set(portId, (m.get(portId) ?? 0) + 1);
   }
+  function addSubtreeChild(parent: string, child: string): void {
+    let arr = subtreeChildren.get(parent);
+    if (!arr) { arr = []; subtreeChildren.set(parent, arr); }
+    arr.push(child);
+  }
   for (const e of edgeSpecs) {
-    let arr = childrenOf.get(e.source);
-    if (!arr) { arr = []; childrenOf.set(e.source, arr); }
-    arr.push(e.target);
+    const shallowEnd = e.deepEnd === e.source ? e.target : e.source;
+    addSubtreeChild(shallowEnd, e.deepEnd);
     bumpPortConn(e.source, e.sourcePort);
     bumpPortConn(e.target, e.targetPort);
   }
@@ -393,13 +456,13 @@ export function buildLayout(
     const rec = nodeRecords.get(nodeId);
     if (!rec) { subtreePingCache.set(nodeId, false); return false; }
     // 只有可达设备才能产生流动动画：不可达节点边线变红已由 edge-unreachable 处理，
-    // 但不应向父节点传播"连通确认"状态
-    let on = rec.role !== 'center' && !rec.device.unreachable && (
+    // 但不应向父节点传播"连通确认"状态。center 自身也不参与传播。
+    if (rec.role === 'center') { subtreePingCache.set(nodeId, false); return false; }
+    let on = !rec.device.unreachable && (
       rec.device.isChild === true ||
       isPingOn(selectedRootId, rec.device.id)
     );
-    // center 节点不向上传播子树 ping 状态，避免左侧分支边线误触发流动动画
-    if (!on && rec.role !== 'center') on = (childrenOf.get(nodeId) ?? []).some((k) => isSubtreePinged(k));
+    if (!on) on = (subtreeChildren.get(nodeId) ?? []).some((k) => isSubtreePinged(k));
     subtreePingCache.set(nodeId, on);
     return on;
   }
@@ -450,12 +513,16 @@ export function buildLayout(
 
   // --- Build VueFlow edges ---
   const edges: Edge<EdgeData>[] = edgeSpecs.map((s) => {
-    const pinging = isSubtreePinged(s.target);
-    const targetRec = nodeRecords.get(s.target);
-    const targetUnreachable = targetRec?.device.unreachable === true;
+    const pinging = isSubtreePinged(s.deepEnd);
+    const deepRec = nodeRecords.get(s.deepEnd);
+    const targetUnreachable = deepRec?.device.unreachable === true;
+    // SVG 路径方向 = source → target；当 deepEnd 是 source 时，
+    // 期望数据流向（从 center 朝外指向 deepEnd）与路径方向相反，需要反转蚂蚁动画
+    const reverseFlow = s.deepEnd === s.source;
     const classes: string[] = [];
     if (pinging) classes.push('pinging');
     if (targetUnreachable) classes.push('edge-unreachable');
+    if (reverseFlow && (pinging || targetUnreachable)) classes.push('flow-reverse');
     return {
       id: s.id,
       source: s.source, target: s.target,
@@ -466,7 +533,7 @@ export function buildLayout(
       class: classes.length > 0 ? classes.join(' ') : undefined,
       markerEnd: s.hasMarker ? {
         type: MarkerType.ArrowClosed,
-        color: targetUnreachable ? UNREACHABLE : s.kind === 'wireless' ? WIRELESS : WIRED,
+        color: targetUnreachable ? UNREACHABLE : colorOf(s.kind),
         width: 14, height: 14,
       } : undefined,
     };

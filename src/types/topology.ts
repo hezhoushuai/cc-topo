@@ -11,7 +11,7 @@ export type DeviceType =
   | 'nas'
   | 'firewall';
 
-export type LinkKind = 'wired' | 'wireless';
+export type LinkKind = 'wired' | 'wireless' | 'satellite';
 
 export type DeviceStatus = 'online' | 'warning' | 'offline';
 
