@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { addDeviceDialog, closeAddDeviceDialog } from '../store/ui';
 import { addDevice, nextAdditionId } from '../store/additions';
 import { getDeviceById, getNic } from '../store/nics';
 import { deviceTypeList, getNamePrefix } from '../data/deviceTypes';
-import type { BaseDevice, DeviceType } from '../types/topology';
+import { edgeStyleList, loadEdgeStyles } from '../data/edgeStyles';
+import type { BaseDevice, DeviceType, LinkKind } from '../types/topology';
 
 const props = defineProps<{ rootId: string }>();
 
@@ -13,11 +14,27 @@ interface Option {
   label: string;
 }
 
+interface KindOption {
+  value: LinkKind;
+  label: string;
+  color: string;
+}
+
 const allOptions = computed<Option[]>(() =>
   deviceTypeList.map((t) => ({ value: t.id, label: t.label })),
 );
 
+const kindOptions = ref<KindOption[]>([]);
+
+onMounted(async () => {
+  await loadEdgeStyles();
+  kindOptions.value = edgeStyleList
+    .filter(s => s.kind !== 'unreachable')
+    .map(s => ({ value: s.kind as LinkKind, label: s.label, color: s.color }));
+});
+
 const selectedType = ref<DeviceType>('workstation');
+const selectedKind = ref<LinkKind>('wired');
 const customName = ref('');
 const customIp = ref('');
 const isChild = ref(true);
@@ -38,6 +55,7 @@ watch(
   (v) => {
     if (!v) return;
     selectedType.value = parentNic.value?.kind === 'wireless' ? 'laptop' : 'workstation';
+    selectedKind.value = parentNic.value?.kind ?? 'wired';
     customName.value = '';
     customIp.value = '';
     isChild.value = true;
@@ -81,7 +99,7 @@ function onSubmit(): void {
     parentDeviceId: addDeviceDialog.deviceId,
     parentNicId: addDeviceDialog.nicId,
     device,
-    kind: parentNic.value?.kind ?? 'wired',
+    kind: selectedKind.value,
   });
   closeAddDeviceDialog();
 }
@@ -108,9 +126,9 @@ function onSubmit(): void {
                 <span class="text-slate-300">{{ parentDevice?.name }}</span>
               </div>
               <div class="text-[10px] mt-0.5 text-slate-500">
-                链路类型 ·
+                端口 ·
                 <span :class="parentNic?.kind === 'wireless' ? 'text-amber-300' : 'text-cyan-300'">
-                  {{ parentNic?.kind === 'wireless' ? '无线' : '有线' }}
+                  {{ parentNic?.name ?? addDeviceDialog.nicId }}
                 </span>
               </div>
             </div>
@@ -137,6 +155,24 @@ function onSubmit(): void {
                   ]"
                   @click="selectedType = opt.value"
                 >
+                  {{ opt.label }}
+                </button>
+              </div>
+            </div>
+            <div v-if="kindOptions.length > 0">
+              <div class="form-key">连接线类型</div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button
+                  v-for="opt in kindOptions"
+                  :key="opt.value"
+                  type="button"
+                  :class="[
+                    'kind-chip',
+                    selectedKind === opt.value ? 'kind-chip-active' : '',
+                  ]"
+                  @click="selectedKind = opt.value"
+                >
+                  <div class="kind-line" :style="{ borderColor: opt.color }" />
                   {{ opt.label }}
                 </button>
               </div>
@@ -216,6 +252,38 @@ function onSubmit(): void {
   border-color: rgb(34 211 238);
   background: rgb(8 51 68 / 0.6);
   color: rgb(165 243 252);
+}
+.kind-chip {
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgb(30 41 59);
+  background: rgb(2 6 23 / 0.5);
+  color: rgb(148 163 184);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.kind-chip:hover {
+  border-color: rgb(71 85 105);
+  color: rgb(203 213 225);
+}
+.kind-chip-active {
+  border-color: rgb(34 211 238);
+  background: rgb(8 51 68 / 0.6);
+  color: rgb(165 243 252);
+}
+.kind-line {
+  width: 30px;
+  height: 3px;
+  border-top: 2px solid transparent;
+  border-radius: 2px;
+}
+.kind-chip-active .kind-line {
+  border-top-style: solid;
 }
 .child-row {
   display: flex;
