@@ -1,0 +1,37 @@
+{
+  "_comment": "连接线样式配置：可在部署后直接编辑此文件。kind 对应 EdgeData 的类型（wired/wireless/satellite）。lineType 为 'solid'（实线）或 'dashed'（虚线）。color 为十六进制颜色。dashArray 为虚线样式 '实线长度 间隙长度'（仅虚线时有效）。",
+  "styles": [
+    {
+      "kind": "wired",
+      "label": "有线",
+      "lineType": "solid",
+      "color": "#22d3ee",
+      "strokeWidth": 1.8,
+      "dashArray": null
+    },
+    {
+      "kind": "wireless",
+      "label": "无线",
+      "lineType": "dashed",
+      "color": "#f59e0b",
+      "strokeWidth": 1.8,
+      "dashArray": "8 6"
+    },
+    {
+      "kind": "satellite",
+      "label": "卫星",
+      "lineType": "dashed",
+      "color": "#a855f7",
+      "strokeWidth": 1.8,
+      "dashArray": "2 4 10 4"
+    },
+    {
+      "kind": "unreachable",
+      "label": "不通",
+      "lineType": "dashed",
+      "color": "#f43f5e",
+      "strokeWidth": 2.2,
+      "dashArray": "6 4"
+    }
+  ]
+}

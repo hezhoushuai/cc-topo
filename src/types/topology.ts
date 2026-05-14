@@ -75,3 +75,14 @@ export interface NicInfo {
   gateway: string;
   kind: LinkKind;
 }
+
+export type EdgeLineType = 'solid' | 'dashed';
+
+export interface EdgeStyle {
+  kind: string;
+  label: string;
+  lineType: EdgeLineType;
+  color: string;
+  strokeWidth: number;
+  dashArray: string | null;
+}

@@ -15,8 +15,18 @@ import { PingServiceKey, RemoveDeviceKey, TogglePortKey } from '../composables/t
 import DeviceNode from './DeviceNode.vue';
 import TopologyEdge from './TopologyEdge.vue';
 import { fetchState, fetchPingStates } from '../api/index';
+import { edgeStyleList, loadEdgeStyles } from '../data/edgeStyles';
 
 const props = defineProps<{ selectedId: string }>();
+
+const legendStyles = ref<{ kind: string; label: string; color: string; strokeWidth: number; dashArray: string | null }[]>([]);
+
+async function loadEdgeStylesForLegend(): Promise<void> {
+  await loadEdgeStyles();
+  legendStyles.value = [...edgeStyleList];
+}
+
+loadEdgeStylesForLegend();
 
 useMetrics();
 useTrafficTicker();
@@ -192,29 +202,19 @@ defineExpose({
     </VueFlow>
     <div class="edge-legend">
       <div class="legend-title">连接类型</div>
-      <div class="legend-row">
+      <div v-for="style in legendStyles" :key="style.kind" class="legend-row">
         <svg width="40" height="10" viewBox="0 0 40 10">
-          <line x1="0" y1="5" x2="40" y2="5" stroke="#22d3ee" stroke-width="1.8" />
+          <line
+            x1="0"
+            y1="5"
+            x2="40"
+            y2="5"
+            :stroke="style.color"
+            :stroke-width="style.strokeWidth"
+            :stroke-dasharray="style.dashArray ?? undefined"
+          />
         </svg>
-        <span>有线</span>
-      </div>
-      <div class="legend-row">
-        <svg width="40" height="10" viewBox="0 0 40 10">
-          <line x1="0" y1="5" x2="40" y2="5" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="8 6" />
-        </svg>
-        <span>无线</span>
-      </div>
-      <div class="legend-row">
-        <svg width="40" height="10" viewBox="0 0 40 10">
-          <line x1="0" y1="5" x2="40" y2="5" stroke="#a855f7" stroke-width="1.8" stroke-dasharray="2 4 10 4" />
-        </svg>
-        <span>卫星</span>
-      </div>
-      <div class="legend-row">
-        <svg width="40" height="10" viewBox="0 0 40 10">
-          <line x1="0" y1="5" x2="40" y2="5" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="6 4" />
-        </svg>
-        <span>不通</span>
+        <span>{{ style.label }}</span>
       </div>
     </div>
   </div>

@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@vue-flow/core';
 import type { EdgeProps } from '@vue-flow/core';
 import type { EdgeData } from '../types/topology';
+import { getEdgeStyle, loadEdgeStyles } from '../data/edgeStyles';
 
 const props = defineProps<EdgeProps<EdgeData>>();
+
+const stylesLoaded = ref(false);
+
+onMounted(async () => {
+  await loadEdgeStyles();
+  stylesLoaded.value = true;
+});
 
 const path = computed(() =>
   getBezierPath({
@@ -20,11 +28,34 @@ const path = computed(() =>
 
 const labelX = computed(() => path.value[1]);
 const labelY = computed(() => path.value[2]);
+
 const isUnreachable = computed(() => props.data?.unreachable === true);
+const linkKind = computed(() => props.data?.kind ?? 'wired');
+
+const edgeStyle = computed(() => {
+  if (!stylesLoaded.value) return null;
+  const kind = isUnreachable.value ? 'unreachable' : linkKind.value;
+  return getEdgeStyle(kind);
+});
+
+const edgeStyleOverride = computed(() => {
+  const style = edgeStyle.value;
+  if (!style) return {};
+  return {
+    stroke: style.color,
+    strokeWidth: style.strokeWidth,
+    strokeDasharray: style.dashArray ?? undefined,
+  };
+});
 </script>
 
 <template>
-  <BaseEdge :id="id" :path="path[0]" :style="style" :marker-end="markerEnd" />
+  <BaseEdge
+    :id="id"
+    :path="path[0]"
+    :style="{ ...style, ...edgeStyleOverride }"
+    :marker-end="markerEnd"
+  />
   <EdgeLabelRenderer v-if="isUnreachable">
     <div
       class="unreachable-mark"
